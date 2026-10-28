@@ -36,6 +36,20 @@ class Settings:
     calibration_file: Path = field(default_factory=lambda: Path(os.getenv("CALIBRATION_FILE", "./models/calibration.json")))
     storage_dir: Path = field(default_factory=lambda: Path(os.getenv("STORAGE_DIR", "./data/storage")))
 
+    # ---- แจ้งเตือนวันหมดอายุ
+    alerts_enabled: bool = field(default_factory=lambda: os.getenv("ALERTS_ENABLED", "1") == "1")
+    alert_days_before: int = field(default_factory=lambda: int(os.getenv("ALERT_DAYS_BEFORE", "7")))
+    alert_check_minutes: int = field(default_factory=lambda: int(os.getenv("ALERT_CHECK_MINUTES", "60")))
+    telegram_bot_token: str = field(default_factory=lambda: os.getenv("TELEGRAM_BOT_TOKEN", ""))
+    telegram_chat_id: str = field(default_factory=lambda: os.getenv("TELEGRAM_CHAT_ID", ""))
+    discord_webhook_url: str = field(default_factory=lambda: os.getenv("DISCORD_WEBHOOK_URL", ""))
+    alert_webhook_url: str = field(default_factory=lambda: os.getenv("ALERT_WEBHOOK_URL", ""))
+    smtp_host: str = field(default_factory=lambda: os.getenv("SMTP_HOST", ""))
+    smtp_port: int = field(default_factory=lambda: int(os.getenv("SMTP_PORT", "587")))
+    smtp_user: str = field(default_factory=lambda: os.getenv("SMTP_USER", ""))
+    smtp_password: str = field(default_factory=lambda: os.getenv("SMTP_PASSWORD", ""))
+    alert_email_to: str = field(default_factory=lambda: os.getenv("ALERT_EMAIL_TO", ""))
+
     def ensure_dirs(self) -> None:
         for sub in ("original", "processed", "annotated", "feedback_crops"):
             (self.storage_dir / sub).mkdir(parents=True, exist_ok=True)

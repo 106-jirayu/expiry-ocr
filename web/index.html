@@ -74,6 +74,7 @@
 <nav>
   <button data-tab="scan" class="active">ถ่าย/สแกน</button>
   <button data-tab="queue">คิวตรวจ <span id="qcount"></span></button>
+  <button data-tab="alerts">แจ้งเตือน <span id="acount"></span></button>
   <button data-tab="history">ประวัติ</button>
 </nav>
 <main>
@@ -108,6 +109,16 @@
     <div class="card"><div id="queueList" class="muted">กำลังโหลด…</div></div>
   </section>
 
+  <!-- ====== ALERTS ====== -->
+  <section id="tab-alerts" class="hidden">
+    <div class="card">
+      <b>แจ้งเตือนวันหมดอายุ</b>
+      <p class="muted" style="margin:4px 0 10px">ระบบตรวจทุกชั่วโมง แจ้งเมื่อสินค้าใกล้หมดอายุ (ภายใน <span id="adays">7</span> วัน) หมดวันนี้ หรือหมดอายุแล้ว</p>
+      <button class="btn secondary" id="notifBtn">🔔 เปิดการแจ้งเตือนบนเครื่องนี้</button>
+    </div>
+    <div class="card"><div id="alertList" class="muted">กำลังโหลด…</div></div>
+  </section>
+
   <!-- ====== HISTORY ====== -->
   <section id="tab-history" class="hidden">
     <div class="card" id="metrics"></div>
@@ -137,9 +148,10 @@ function saveReviewer(v) { try { localStorage.setItem("reviewer", v); } catch {}
 document.querySelectorAll("nav button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
 function showTab(name) {
   document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
-  ["scan", "queue", "history"].forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
+  ["scan", "queue", "alerts", "history"].forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
   if (name === "queue") loadQueue();
   if (name === "history") loadHistory();
+  if (name === "alerts") loadAlerts();
 }
 
 // ---------- camera (getUserMedia ต้องใช้ HTTPS หรือ localhost)
@@ -261,6 +273,7 @@ function renderResult(doc, el) {
       <div class="row" style="align-items:center;margin-bottom:10px"><div><span class="badge ${cls}">${st}</span></div>
       <div class="muted" style="text-align:right">#${doc.document_id} · ${(doc.processing_ms / 1000).toFixed(1)} วิ</div></div>
       <img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">
+      ${expiryBanner(doc.expiry)}
       ${reasons ? `<div style="margin-top:10px"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
       ${warns ? `<div style="margin-top:10px;color:var(--bad)"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
     </div>
@@ -306,6 +319,56 @@ async function rejectDoc(doc, el) {
   if (r.ok) { renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
 }
 
+// ---------- แจ้งเตือนวันหมดอายุ
+const KIND = { EXPIRED: ["⛔ หมดอายุแล้ว", "b-bad"], EXPIRES_TODAY: ["🚨 หมดอายุวันนี้", "b-bad"],
+  EXPIRING_SOON: ["⏰ ใกล้หมดอายุ", "b-warn"], OK: ["✅ ยังไม่หมดอายุ", "b-ok"] };
+function daysText(d) { return d < 0 ? `หมดอายุไปแล้ว ${-d} วัน` : d === 0 ? "หมดอายุวันนี้" : `เหลืออีก ${d} วัน`; }
+function expiryBanner(e) {
+  if (!e) return "";
+  const [t, cls] = KIND[e.status] || KIND.OK;
+  return `<div class="row" style="margin-top:10px;align-items:center"><div><span class="badge ${cls}">${t}</span></div>
+    <div class="muted" style="text-align:right">${daysText(e.days_left)}</div></div>`;
+}
+async function loadAlerts() {
+  const list = await (await fetch(`${API}/alerts`)).json();
+  $("#alertList").innerHTML = list.length ? list.map((a) => {
+    const [t, cls] = KIND[a.kind] || ["", ""];
+    return `<div class="list-item"><img loading="lazy" src="${API}/documents/${a.document_id}/image?variant=original" alt="">
+      <div class="grow"><div><span class="badge ${cls}">${t}</span></div>
+      <div><b>EXP ${esc(a.exp_date)}</b> · ${daysText(a.days_left)}</div>
+      <div class="muted">Lot ${esc(a.lot_number || "-")} · #${a.document_id}</div></div>
+      <button class="btn secondary" style="width:auto;min-height:40px;padding:0 12px" data-ack="${a.id}">รับทราบ</button></div>`;
+  }).join("") : "ไม่มีสินค้าใกล้หมดอายุ 👍";
+  $("#alertList").querySelectorAll("[data-ack]").forEach((b) => b.onclick = async () => {
+    const user = reviewerName() || prompt("ชื่อผู้รับทราบ") || ""; if (!user) return; saveReviewer(user);
+    await fetch(`${API}/alerts/${b.dataset.ack}/ack`, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user }) });
+    loadAlerts(); pollAlerts();
+  });
+}
+let seenAlerts = null;
+async function pollAlerts() {
+  try {
+    const list = await (await fetch(`${API}/alerts`)).json();
+    $("#acount").textContent = list.length ? `(${list.length})` : "";
+    const ids = new Set(list.map((a) => a.id));
+    if (seenAlerts) {
+      for (const a of list.filter((x) => !seenAlerts.has(x.id))) {
+        toast(`${a.title}: EXP ${a.exp_date}`, 5000);
+        if ("Notification" in window && Notification.permission === "granted")
+          new Notification(a.title, { body: a.message });
+      }
+    }
+    seenAlerts = ids;
+  } catch {}
+}
+$("#notifBtn").onclick = async () => {
+  if (!("Notification" in window)) return toast("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
+  const p = await Notification.requestPermission();
+  toast(p === "granted" ? "เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)" : "ไม่ได้รับอนุญาตให้แจ้งเตือน");
+};
+setInterval(pollAlerts, 60000); pollAlerts();
+
 // ---------- queue / history
 function itemHtml(d) {
   const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
@@ -339,8 +402,9 @@ async function loadHistory() {
 }
 async function refreshCount() {
   try { const q = await (await fetch(`${API}/review/queue?limit=500`)).json(); $("#qcount").textContent = q.length ? `(${q.length})` : ""; } catch {}
+  pollAlerts();
 }
-fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; }).catch(() => {});
+fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; }).catch(() => {});
 refreshCount();
 </script>
 </body>

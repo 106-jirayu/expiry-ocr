@@ -16,6 +16,7 @@ def _images(tmp_path, n=12):
 def test_end_to_end_review_flow(tmp_path: Path):
     with TestClient(app) as c:
         assert c.get("/health").json()["status"] == "ok"
+        before = c.get("/api/v1/metrics").json()["total_documents"]
         docs = []
         for path, gt in _images(tmp_path):
             r = c.post("/api/v1/documents", files={"file": (path.name, path.read_bytes(), "image/png")})
@@ -25,10 +26,11 @@ def test_end_to_end_review_flow(tmp_path: Path):
         assert statuses <= {"AUTO_APPROVED", "PENDING_REVIEW"}
 
         queue = c.get("/api/v1/review/queue").json()
-        assert len(queue) == sum(d["status"] == "PENDING_REVIEW" for d, _ in docs)
-        if not queue:
+        mine = {d["document_id"] for d, _ in docs if d["status"] == "PENDING_REVIEW"}
+        assert mine <= {q["document_id"] for q in queue}
+        if not mine:
             return
-        doc_id = queue[0]["document_id"]
+        doc_id = min(mine)
         gt = next(g for d, g in docs if d["document_id"] == doc_id)
 
         # ค่าที่ผิดกฎ (EXP ก่อน MFG) ต้องถูกปฏิเสธ เว้นแต่ force
@@ -52,7 +54,7 @@ def test_end_to_end_review_flow(tmp_path: Path):
 
         assert c.get(f"/api/v1/documents/{doc_id}/image?variant=annotated").headers["content-type"] == "image/png"
         m = c.get("/api/v1/metrics").json()
-        assert m["total_documents"] == len(docs)
+        assert m["total_documents"] - before == len(docs)
         assert abs(m["first_pass_yield"] + m["exception_rate"] - 1) < 1e-9
         fb = c.get("/api/v1/export/feedback")
         assert fb.status_code == 200 and fb.headers["content-type"] == "application/zip"

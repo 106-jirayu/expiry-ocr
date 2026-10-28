@@ -1,50 +1,47 @@
 [
   {
-    "image": "images/img_0021.png",
+    "image": "images/img_0016.png",
     "status": "PENDING_REVIEW",
     "gt": {
-      "exp_date": "2026-12-23",
-      "mfg_date": "2026-08-05",
-      "lot_number": "W16720C",
-      "exp_text": "23.12.2026",
-      "mfg_text": "05.08.2026",
-      "lot_text": "W16720C",
-      "style": "DD.MM.YYYY"
+      "exp_date": "2028-09-04",
+      "mfg_date": "2026-10-12",
+      "lot_number": "G456C",
+      "exp_text": "04 SEP 2028",
+      "mfg_text": "12 OCT 2026",
+      "lot_text": "G456C",
+      "style": "DD MON YYYY"
     },
     "pred": {
-      "exp_date": "2026-12-23",
-      "mfg_date": "2026-08-05",
-      "lot_number": "EW16720C"
+      "exp_date": "2028-09-04",
+      "mfg_date": "2026-10-12"
     },
     "reasons": [
-      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:lot_number agreement=67%"
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%"
     ]
   },
   {
-    "image": "images/img_0041.png",
+    "image": "images/img_0025.png",
     "status": "PENDING_REVIEW",
     "gt": {
-      "exp_date": "2026-05-20",
-      "mfg_date": "2026-02-24",
-      "lot_number": "C33732",
-      "exp_text": "20-05-2026",
-      "mfg_text": "24-02-2026",
-      "lot_text": "C33732",
-      "style": "DD-MM-YYYY"
+      "exp_date": "2026-07-20",
+      "mfg_date": "2025-12-12",
+      "lot_number": "T68340E",
+      "exp_text": "20 JUL 2026",
+      "mfg_text": "12 DEC 2025",
+      "lot_text": "T68340E",
+      "style": "DD MON YYYY"
     },
     "pred": {
-      "exp_date": "2026-05-20",
-      "mfg_date": null,
-      "lot_number": null
+      "exp_date": "2026-07-20",
+      "mfg_date": "2025-12-02",
+      "lot_number": "T68340E"
     },
     "reasons": [
-      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
-      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:lot_number agreement=67%",
-      "RULE_FAIL:R02:date_format:mfg_date",
-      "RULE_FAIL:R08:lot_format:lot_number"
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%"
     ]
   },
   {
@@ -60,17 +57,17 @@
       "style": "DD MON YYYY"
     },
     "pred": {
-      "exp_date": "2026-11-01",
-      "mfg_date": "2026-04-01",
-      "lot_number": null
+      "exp_date": "2026-04-01",
+      "mfg_date": "2026-11-01",
+      "lot_number": "B8461"
     },
     "reasons": [
-      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
       "ENSEMBLE_DISAGREE:exp_date agreement=67%",
-      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
       "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
-      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
-      "RULE_FAIL:R08:lot_format:lot_number"
+      "RULE_FAIL:R05:exp_after_mfg:exp_date",
+      "RULE_FAIL:R06:mfg_not_future:mfg_date"
     ]
   },
   {
@@ -90,34 +87,33 @@
       "mfg_date": "2026-05-24"
     },
     "reasons": [
-      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:mfg_date agreement=33%",
-      "RULE_FAIL:R03:digit_range:exp_date"
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
+      "RULE_FAIL:R02:date_format:exp_date"
     ]
   },
   {
-    "image": "images/img_0119.png",
+    "image": "images/img_0150.png",
     "status": "PENDING_REVIEW",
     "gt": {
-      "exp_date": "2027-02-11",
+      "exp_date": "2028-05-15",
       "mfg_date": null,
-      "lot_number": null,
-      "exp_text": "11/02/27",
+      "lot_number": "Y858E",
+      "exp_text": "15/05/28",
       "mfg_text": null,
-      "lot_text": null,
+      "lot_text": "Y858E",
       "style": "DD/MM/YY"
     },
     "pred": {
-      "exp_date": "2027-02-11",
-      "mfg_date": "2027-02-11"
+      "exp_date": null,
+      "lot_number": "Y858E"
     },
     "reasons": [
-      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
       "ENSEMBLE_DISAGREE:exp_date agreement=67%",
-      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:mfg_date agreement=33%",
-      "RULE_FAIL:R05:exp_after_mfg:exp_date",
-      "RULE_FAIL:R06:mfg_not_future:mfg_date"
+      "RULE_FAIL:R02:date_format:exp_date"
     ]
   },
   {
@@ -133,17 +129,35 @@
       "style": "DD-MM-YYYY"
     },
     "pred": {
-      "exp_date": null,
-      "mfg_date": "2029-05-28",
+      "exp_date": "2029-05-28",
       "lot_number": null
     },
     "reasons": [
-      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
-      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
+      "LOW_CONFIDENCE:lot_number=77.23% < 90%",
       "ENSEMBLE_DISAGREE:lot_number agreement=67%",
-      "RULE_FAIL:R02:date_format:exp_date",
-      "RULE_FAIL:R06:mfg_not_future:mfg_date",
       "RULE_FAIL:R08:lot_format:lot_number"
+    ]
+  },
+  {
+    "image": "images/img_0190.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2029-07-25",
+      "mfg_date": null,
+      "lot_number": "A56807",
+      "exp_text": "25/07/2029",
+      "mfg_text": null,
+      "lot_text": "A56807",
+      "style": "DD/MM/YYYY"
+    },
+    "pred": {
+      "exp_date": null,
+      "lot_number": "A56807"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
+      "RULE_FAIL:R02:date_format:exp_date"
     ]
   },
   {
@@ -159,56 +173,59 @@
       "style": "BE DD/MM/YYYY"
     },
     "pred": {
-      "exp_date": "2027-08-05"
-    },
-    "reasons": [
-      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:exp_date agreement=33%"
-    ]
-  },
-  {
-    "image": "images/img_0231.png",
-    "status": "PENDING_REVIEW",
-    "gt": {
-      "exp_date": "2027-12-24",
-      "mfg_date": "2026-09-13",
-      "lot_number": null,
-      "exp_text": "24/12/2570",
-      "mfg_text": "13/09/2569",
-      "lot_text": null,
-      "style": "BE DD/MM/YYYY"
-    },
-    "pred": {
-      "exp_date": "2027-12-24",
+      "exp_date": "2027-08-05",
       "mfg_date": null
     },
     "reasons": [
-      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=33%",
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=33%",
       "RULE_FAIL:R02:date_format:mfg_date"
     ]
   },
   {
-    "image": "images/img_0235.png",
+    "image": "images/img_0222.png",
     "status": "PENDING_REVIEW",
     "gt": {
-      "exp_date": "2028-07-16",
-      "mfg_date": "2026-04-13",
-      "lot_number": "F37998G",
-      "exp_text": "16/07/28",
-      "mfg_text": "13/04/26",
-      "lot_text": "F37998G",
-      "style": "DD/MM/YY"
+      "exp_date": "2026-06-20",
+      "mfg_date": "2026-05-06",
+      "lot_number": "G22330B",
+      "exp_text": "20 JUN 2026",
+      "mfg_text": "06 MAY 2026",
+      "lot_text": "G22330B",
+      "style": "DD MON YYYY"
+    },
+    "pred": {
+      "exp_date": "2026-06-20",
+      "mfg_date": "2026-05-01",
+      "lot_number": "G22330B"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%"
+    ]
+  },
+  {
+    "image": "images/img_0248.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2027-03-07",
+      "mfg_date": null,
+      "lot_number": "W95561G",
+      "exp_text": "07MAR27",
+      "mfg_text": null,
+      "lot_text": "W95561G",
+      "style": "DDMONYY"
     },
     "pred": {
       "exp_date": null,
-      "mfg_date": "2026-04-13",
-      "lot_number": "F37998G"
+      "lot_number": "W95561G"
     },
     "reasons": [
-      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
-      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
-      "RULE_FAIL:R03:digit_range:exp_date"
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "RULE_FAIL:R02:date_format:exp_date"
     ]
   }
 ]

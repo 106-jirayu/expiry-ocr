@@ -21,11 +21,11 @@ FIELDS = ("exp_date", "mfg_date", "lot_number")
 
 LABELS = {
     "exp_date": re.compile(
-        r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]F[O0]RE(\s*END)?|U[S5]E\s*[B8]Y|EXP(IRY|IRES|IRE)?(\s*DATE)?|EXD|(?<![A-Z0-9])[B8]{2}E?(?![A-Z])|"
+        r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]F[O0]RE(\s*END)?|U[S5]E\s*[B8]Y|EXP(IRY|IRES|IRE)?(\s*DATE)?|EXD|(?<![A-Z0-9])(BBE?(?![A-Z])|[B8]{2}E?(?![A-Z0-9]))|"
         r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรใช้ก่อน)\s*[:.\-]?",
         re.I),
     "mfg_date": re.compile(
-        r"(?<![A-Z])(MFG|ME?F[G6D0O]|MANUFACTURED(\s*DATE)?|MFD|PROD(UCTION)?(\s*DATE)?(?![A-Z])|PKD|"
+        r"(?<![A-Z])(MFG|M[EI]?F\s?[G6D0O]|M[EI][G6]|MANUFACTURED(\s*DATE)?|MFD|PR[O0]D(UCTI[O0]N)?(\s*DATE)?(?![A-Z])|PKD|"
         r"วันผลิต|ผลิต|ผลิตเมื่อ)\s*[:.\-]?",
         re.I),
     "lot_number": re.compile(
@@ -37,7 +37,7 @@ LOT_VALUE = re.compile(r"[A-Z0-9][A-Z0-9\-/]{2,19}")
 # ตัวอักษรที่ OCR มักอ่านสลับกับตัวเลข — แก้เฉพาะเมื่ออยู่ติดตัวเลข/ตัวคั่นวันที่
 DIGIT_FIX = {"O": "0", "Q": "0", "D": "0", "I": "1", "L": "1", "|": "1", "!": "1",
              "S": "5", "B": "8", "Z": "2", "G": "6", "g": "9", "T": "7",
-             ",": "."}  # จุลภาคระหว่างตัวเลข = ตัวคั่นวันที่ที่ OCR อ่านเพี้ยน
+             ",": ".", ":": "."}  # จุลภาค/โคลอนระหว่างตัวเลข = ตัวคั่นวันที่ที่ OCR อ่านเพี้ยน
 
 # ชื่อเดือนที่ OCR อ่านตัวอักษรเป็นตัวเลข
 MONTH_FIX = {"0CT": "OCT", "N0V": "NOV", "5EP": "SEP", "AU6": "AUG", "8EC": "DEC", "JU1": "JUL", "MA8": "MAR"}
@@ -191,19 +191,40 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
                 seg_fixes = sum(1 for a, b in zip(upper[pd.start:pd.end], fixed[pd.start:pd.end]) if a != b)
                 floating.append((idx, line, pd, 0, seg_fixes))
 
-    # เติมฟิลด์ที่ขาดจากวันที่ลอย ๆ
-    if floating and ("exp_date" not in found or "mfg_date" not in found):
+    # เติมฟิลด์ที่ขาด (หรือพบ label แต่ค่าอยู่บรรทัดถัดไป) จากวันที่ลอย ๆ — ทำเครื่องหมาย inferred เพื่อให้คนยืนยัน
+    def missing(name):
+        return name not in found or found[name].value is None
+
+    if floating and (missing("exp_date") or missing("mfg_date")):
         def key(item):
             d = item[2].to_date()
             return d or date.min
         floating.sort(key=key)
-        if "exp_date" not in found:
+        if missing("exp_date"):
             idx, line, pd, off, fx = floating.pop(-1)
             found["exp_date"] = _date_prediction("exp_date", line, idx, off, pd, fx, None, True)
-        if "mfg_date" not in found and floating:
+        if missing("mfg_date") and floating:
             idx, line, pd, off, fx = floating.pop(0)
             found["mfg_date"] = _date_prediction("mfg_date", line, idx, off, pd, fx, None, True)
     return found
+
+
+def unclaimed_dates(lines: list[TextLine], fields: dict[str, FieldPrediction],
+                    today: date | None = None) -> list[str]:
+    """วันที่ที่พบในภาพแต่ไม่ได้ถูกจัดเป็น EXP/MFG — อาจเป็นฟิลด์ที่ระบบหา label ไม่เจอ (ต้องให้คนดู)"""
+    claimed = {f.value for f in fields.values() if f.value}
+    claimed_raw = {f.raw_text for f in fields.values() if f.raw_text}
+    out = []
+    for line in lines:
+        fixed, _ = fix_digits(line.text.upper())
+        for pd in find_dates(fixed, today):
+            d = pd.to_date()
+            if d is None or not 2000 <= d.year <= 2100 or d.isoformat() in claimed:
+                continue
+            if any(pd.raw in r or r in pd.raw for r in claimed_raw):
+                continue
+            out.append(line.text[pd.start:pd.end])
+    return out
 
 
 def to_structured_json(fields: dict[str, FieldPrediction]) -> dict:

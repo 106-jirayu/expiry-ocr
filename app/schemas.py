@@ -17,6 +17,10 @@ class ReviewIn(BaseModel):
     force: bool = False
 
 
+class AckIn(BaseModel):
+    user: str = Field(..., min_length=1, description="ผู้รับทราบ")
+
+
 class RejectIn(BaseModel):
     reviewer: str = Field(..., min_length=1)
     reason: str = Field(..., min_length=1)

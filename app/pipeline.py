@@ -13,7 +13,7 @@ import numpy as np
 
 from app.config import settings
 from app.extraction.consensus import merge_passes
-from app.extraction.kie import FieldPrediction, extract_fields, to_structured_json
+from app.extraction.kie import FieldPrediction, extract_fields, to_structured_json, unclaimed_dates
 from app.intake.preprocessing import PreprocessConfig, PreprocessResult, decode_image, preprocess
 from app.recognition.base import OCREngine, RecognitionContext, TextLine
 from app.recognition.factory import build_engine
@@ -25,8 +25,8 @@ from app.rules.validators import RuleResult, validate
 # preprocessing variant ของแต่ละรอบ (multi-pass) — ให้ engine เห็นภาพในมุมที่ต่างกันเล็กน้อย
 PASS_VARIANTS: list[dict] = [
     {},                                                    # ครบทุกขั้นตอน
-    {"denoise": False, "deblur_method": "wiener"},         # คม/ deconvolution
-    {"denoise": False, "deblur": False, "contrast": True},  # ใกล้ภาพต้นฉบับ
+    {"deskew": False},                                     # ไม่หมุนภาพ (กันกรณีประมาณมุมเอียงผิด)
+    {"denoise": False, "deblur": False, "contrast": False, "deskew": False},  # ภาพต้นฉบับ (แค่ปรับขนาด)
 ]
 
 
@@ -96,7 +96,8 @@ class ExpiryOCRPipeline:
         snapshot = [{k: v.value for k, v in p.items()} for p in pass_fields]
         engine_name = getattr(self.engine, "last_used", self.engine.name)
         fields = self.calibrator.apply(apply_confidence(merge_passes(pass_fields)), engine_name)
-        rules = validate(fields, self.today, self.max_shelf_life_years)
+        rules = validate(fields, self.today, self.max_shelf_life_years,
+                         extra_dates=unclaimed_dates(first_lines, fields, self.today))
         decision = route(fields, rules, self.threshold)
         return PipelineResult(
             sha256=sha, fields=fields, rules=rules, decision=decision,

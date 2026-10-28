@@ -12,6 +12,8 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.alerts import notifier
+from app.alerts import service as alerts
 from app.config import settings
 from app.db import get_session
 from app.downstream.exporter import document_json, export_feedback_dataset
@@ -20,7 +22,7 @@ from app.models import DocumentStatus
 from app.pipeline import ExpiryOCRPipeline
 from app.review import service
 from app.review.service import FieldCorrection
-from app.schemas import RejectIn, ReviewIn
+from app.schemas import AckIn, RejectIn, ReviewIn
 
 router = APIRouter(prefix="/api/v1")
 MAX_UPLOAD = 15 * 1024 * 1024
@@ -144,3 +146,30 @@ def export_feedback(only_errors: bool = False, db: Session = Depends(get_session
 @router.get("/metrics", summary="ตัวชี้วัดการทำงานจริง: First-Pass Yield, Exception Rate, Correction Rate")
 def metrics(db: Session = Depends(get_session)):
     return service.operational_metrics(db)
+
+
+# ------------------------------------------------------------ แจ้งเตือนวันหมดอายุ
+@router.get("/alerts", summary="รายการแจ้งเตือนวันหมดอายุ (ใกล้หมด / หมดวันนี้ / หมดแล้ว)")
+def list_alerts(include_acknowledged: bool = False, db: Session = Depends(get_session)):
+    return [alerts.alert_json(a) for a in alerts.list_alerts(db, only_open=not include_acknowledged)]
+
+
+@router.post("/alerts/check", summary="ตรวจวันหมดอายุทุกเอกสารเดี๋ยวนี้ (ปกติระบบตรวจเองตามรอบ)")
+def check_alerts(db: Session = Depends(get_session)):
+    created = alerts.scan(db)
+    return {"created": [alerts.alert_json(a) for a in created], "channels": notifier.configured_channels()}
+
+
+@router.post("/alerts/{alert_id}/ack", summary="รับทราบแจ้งเตือน (เช่น นำสินค้าออกจากชั้นแล้ว)")
+def ack_alert(alert_id: int, body: AckIn, db: Session = Depends(get_session)):
+    a = alerts.acknowledge(db, alert_id, body.user)
+    if a is None:
+        raise HTTPException(404, "ไม่พบแจ้งเตือน")
+    return alerts.alert_json(a)
+
+
+@router.post("/alerts/test", summary="ส่งข้อความทดสอบไปทุกช่องทางที่ตั้งค่าไว้")
+def test_notify():
+    channels = notifier.configured_channels()
+    sent = notifier.send("✅ ทดสอบแจ้งเตือน Expiry OCR", "ถ้าเห็นข้อความนี้ แปลว่าตั้งค่าช่องทางแจ้งเตือนถูกต้องแล้ว")
+    return {"configured": channels, "sent": sent}

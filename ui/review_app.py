@@ -74,7 +74,8 @@ with st.sidebar:
         c2.metric("Exception Rate", f"{(m['exception_rate'] or 0):.1%}")
         st.metric("ค้างในคิว", m["by_status"]["PENDING_REVIEW"])
 
-tab_queue, tab_all, tab_audit, tab_fb = st.tabs(["🗂️ คิวตรวจ", "📋 เอกสารทั้งหมด", "🧾 Audit Trail", "🔁 Feedback Data"])
+tab_queue, tab_alerts, tab_all, tab_audit, tab_fb = st.tabs(
+    ["🗂️ คิวตรวจ", "⏰ แจ้งเตือนวันหมดอายุ", "📋 เอกสารทั้งหมด", "🧾 Audit Trail", "🔁 Feedback Data"])
 
 # ------------------------------------------------------------------ queue
 with tab_queue:
@@ -162,6 +163,31 @@ with tab_queue:
                     else:
                         st.toast("บันทึกแล้ว ✓" + (" (เก็บเป็น feedback data)" if corrections else ""))
                         st.rerun()
+
+# ------------------------------------------------------------------ alerts
+with tab_alerts:
+    KIND_TH = {"EXPIRED": "⛔ หมดอายุแล้ว", "EXPIRES_TODAY": "🚨 หมดอายุวันนี้", "EXPIRING_SOON": "⏰ ใกล้หมดอายุ"}
+    c1, c2 = st.columns([1, 3])
+    if c1.button("ตรวจวันหมดอายุเดี๋ยวนี้"):
+        res, _ = api("POST", "/alerts/check")
+        if res:
+            st.toast(f"แจ้งเตือนใหม่ {len(res['created'])} รายการ · ช่องทาง: {', '.join(res['channels']) or 'หน้าเว็บเท่านั้น'}")
+    show_all = c2.checkbox("แสดงรายการที่รับทราบแล้วด้วย")
+    al, _ = api("GET", "/alerts", params={"include_acknowledged": show_all})
+    if not al:
+        st.success("ไม่มีสินค้าใกล้หมดอายุ")
+    for a in al or []:
+        with st.container(border=True):
+            l, r = st.columns([4, 1])
+            l.markdown(f"**{KIND_TH.get(a['kind'], a['kind'])}** · EXP `{a['exp_date']}` · Lot `{a['lot_number'] or '-'}` "
+                       f"· เอกสาร #{a['document_id']}")
+            l.caption(a["message"].replace("\n", " · ") + (f" · รับทราบโดย {a['acknowledged_by']}" if a["acknowledged"] else ""))
+            if not a["acknowledged"] and r.button("รับทราบ", key=f"ack_{a['id']}"):
+                if not reviewer.strip():
+                    st.error("กรุณาใส่ชื่อผู้ตรวจที่แถบซ้าย")
+                else:
+                    api("POST", f"/alerts/{a['id']}/ack", json={"user": reviewer})
+                    st.rerun()
 
 # ------------------------------------------------------------------ all documents
 with tab_all:

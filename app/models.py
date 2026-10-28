@@ -101,6 +101,29 @@ class AuditLog(Base):
     document: Mapped[Document] = relationship(back_populates="audit_logs")
 
 
+class AlertKind(str, enum.Enum):
+    EXPIRING_SOON = "EXPIRING_SOON"    # ใกล้หมดอายุ (ภายใน ALERT_DAYS_BEFORE วัน)
+    EXPIRES_TODAY = "EXPIRES_TODAY"    # หมดอายุวันนี้
+    EXPIRED = "EXPIRED"                # หมดอายุแล้ว
+
+
+class ExpiryAlert(Base):
+    """การแจ้งเตือนวันหมดอายุ — 1 แถวต่อ (เอกสาร, ระดับ) จึงไม่แจ้งซ้ำ"""
+    __tablename__ = "expiry_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[AlertKind] = mapped_column(Enum(AlertKind), index=True)
+    exp_date: Mapped[str] = mapped_column(String(10))
+    lot_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    message: Mapped[str] = mapped_column(Text)
+    channels_sent: Mapped[list] = mapped_column(JSON, default=list)
+    acknowledged: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    acknowledged_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class FeedbackSample(Base):
     __tablename__ = "feedback_samples"
 

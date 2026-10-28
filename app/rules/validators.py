@@ -9,6 +9,7 @@ R06 mfg_not_future     วันผลิตต้องไม่อยู่ใ
 R07 shelf_life         อายุสินค้า (EXP - MFG) ต้องไม่เกิน MAX_SHELF_LIFE_YEARS
 R08 lot_format         Lot number ต้องเป็นตัวอักษร/ตัวเลข 3-20 ตัว
 R08b                   (lot_format ใช้กับ lot ที่พบ label แต่อ่านค่าไม่ได้ด้วย)
+R10 unclaimed_date     พบวันที่อื่นในภาพที่ไม่ได้จัดเป็น EXP/MFG (อาจหา label ไม่เจอ)
 R09 not_expired        (warning) สินค้าหมดอายุแล้ว — แจ้งเตือนแต่ไม่บังคับส่ง HITL
 
 severity: "error" = ไม่ผ่าน -> ส่ง HITL, "warning" = แจ้งเตือนเท่านั้น
@@ -45,7 +46,7 @@ def _d(f: FieldPrediction | None) -> date | None:
 
 def validate(fields: dict[str, FieldPrediction], today: date | None = None,
              max_shelf_life_years: int = 10, min_year: int = 2000, max_year_ahead: int = 15,
-             allowed_formats: set[str] = ALLOWED_FORMATS) -> list[RuleResult]:
+             allowed_formats: set[str] = ALLOWED_FORMATS, extra_dates: list[str] | None = None) -> list[RuleResult]:
     today = today or date.today()
     out: list[RuleResult] = []
     exp, mfg, lot = fields.get("exp_date"), fields.get("mfg_date"), fields.get("lot_number")
@@ -93,6 +94,9 @@ def validate(fields: dict[str, FieldPrediction], today: date | None = None,
         ok = bool(lot.value and LOT_RE.match(lot.value))
         out.append(RuleResult("R08", "lot_format", ok, "lot_number",
                               "รูปแบบ Lot ถูกต้อง" if ok else f"รูปแบบ Lot ผิดปกติ: {lot.value!r}"))
+    if extra_dates:
+        out.append(RuleResult("R10", "unclaimed_date", False, None,
+                              "พบวันที่ที่ไม่รู้ว่าเป็น EXP หรือ MFG: " + ", ".join(repr(x) for x in extra_dates)))
     if e:
         ok = e >= today
         out.append(RuleResult("R09", "not_expired", ok, "exp_date",

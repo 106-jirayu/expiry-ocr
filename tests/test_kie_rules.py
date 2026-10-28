@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from app.extraction.date_parser import find_dates, normalize_year
-from app.extraction.kie import extract_fields, fix_digits
+from app.extraction.kie import extract_fields, fix_digits, unclaimed_dates
 from app.models import DocumentStatus
 from app.recognition.base import TextLine
 from app.rules.confidence import apply_confidence
@@ -18,8 +18,9 @@ def L(text, conf=0.99):
 
 
 def run(lines):
-    fields = apply_confidence(extract_fields([L(t) if isinstance(t, str) else t for t in lines], TODAY))
-    rules = validate(fields, TODAY)
+    lines = [L(t) if isinstance(t, str) else t for t in lines]
+    fields = apply_confidence(extract_fields(lines, TODAY))
+    rules = validate(fields, TODAY, extra_dates=unclaimed_dates(lines, fields, TODAY))
     return fields, rules, route(fields, rules, 0.90)
 
 
@@ -130,3 +131,32 @@ def test_find_dates_no_overlap():
 def test_product_word_is_not_prod_label():
     f, _, _ = run(["PRODUCT OF THAILAND", "MFG 20/06/26", "EXP. 06/06/27"])
     assert f["mfg_date"].value == "2026-06-20" and f["exp_date"].value == "2027-06-06"
+
+
+def test_inconsistent_separator_not_parsed_as_date():
+    f, _, _ = run(["EXP. 1 16/07/28"])
+    assert f["exp_date"].value == "2028-07-16"
+
+
+def test_ocr_misread_labels():
+    f, _, _ = run(["MEG 11-FEB-2026", "PR0D: 17/11/2568"])
+    assert f["mfg_date"].value == "2026-02-11"
+    f, _, _ = run(["PR0D: 17/11/2568 BEST BEF0RE 08/09/2569"])
+    assert f["mfg_date"].value == "2025-11-17" and f["exp_date"].value == "2026-09-08"
+
+
+def test_lot_code_starting_with_b8_is_not_bb_label():
+    f, _, _ = run(["LOT N NO. B8699", "BB 01/02/2028"])
+    assert f["lot_number"].value == "B8699" and f["exp_date"].value == "2028-02-01"
+
+
+def test_label_value_on_next_line_is_inferred():
+    f, _, d = run(["EXPIRY DATE:", "BARCODE 2027-06-24"])
+    assert f["exp_date"].value == "2027-06-24" and f["exp_date"].inferred
+    assert not d.auto_approved
+
+
+def test_unclaimed_date_routes_to_review():
+    _, rules, d = run(["MFG 01/01/2026", "EXP 01/01/2028", "12/12/2027"])
+    assert any(r.rule_id == "R10" and not r.passed for r in rules)
+    assert not d.auto_approved

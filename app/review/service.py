@@ -13,6 +13,7 @@ import cv2
 from sqlalchemy import Integer, func, select
 from sqlalchemy.orm import Session
 
+from app.alerts import service as alerts
 from app.config import settings
 from app.extraction.kie import FIELDS, FieldPrediction
 from app.models import AuditAction, AuditLog, Document, DocumentStatus, ExtractedField, FeedbackSample
@@ -77,6 +78,8 @@ def ingest(session: Session, raw: bytes, filename: str, pipeline: ExpiryOCRPipel
     ))
     session.add(doc)
     session.commit()
+    if auto and settings.alerts_enabled:
+        alerts.check_document(session, doc)
     return doc, result
 
 
@@ -203,6 +206,8 @@ def submit_review(session: Session, doc_id: int, reviewer: str, corrections: lis
     doc.status = DocumentStatus.HUMAN_CORRECTED if any_edit else DocumentStatus.HUMAN_APPROVED
     doc.reviewed_by, doc.reviewed_at = reviewer, now
     session.commit()
+    if settings.alerts_enabled:
+        alerts.check_document(session, doc)
     return doc
 
 

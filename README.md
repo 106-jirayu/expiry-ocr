@@ -9,9 +9,10 @@
 - รองรับ OCR อื่นผ่าน Adapter: **TrOCR**, **Vision-Language Model** (OpenAI-compatible API) และ **Mock** (สำหรับเทสต์)
 - **Confidence Calibration**: แปลงคะแนนดิบของ OCR ให้เป็นความน่าจะเป็นที่อ่านถูกจริง ก่อนเทียบเกณฑ์ 90%
 - **Multi-pass Ensemble**: อ่านภาพ 3 รอบด้วย preprocessing ต่างกัน แล้วลงคะแนนเสียง ถ้าไม่ตรงกัน → ส่งคนตรวจ
-- กฎธุรกิจ 9 ข้อ + ความมั่นใจระดับฟิลด์ → Auto-Approved เมื่อ ≥ 90% และผ่านกฎทุกข้อ
+- กฎธุรกิจ 10 ข้อ + ความมั่นใจระดับฟิลด์ → Auto-Approved เมื่อ ≥ 90% และผ่านกฎทุกข้อ
 - **หน้าเว็บมือถือ** ถ่ายรูปจากกล้อง เตือนภาพเบลอก่อนส่ง ดูผลพร้อมกรอบไฮไลท์ และตรวจแก้ได้บนมือถือ
 - **Streamlit HITL Review UI** สำหรับเจ้าหน้าที่ QA บนคอมพิวเตอร์
+- **แจ้งเตือนวันหมดอายุ** (ใกล้หมด / หมดวันนี้ / หมดแล้ว) บนหน้าเว็บ และส่งเข้า Telegram / Discord / Email / Webhook
 - สคริปต์ประเมินผล: **CER, Field-Level Accuracy, First-Pass Yield, Exception Rate, Auto-Approved Precision**
 
 ---
@@ -78,7 +79,7 @@ expiry-ocr/
 ├── ui/review_app.py            # Streamlit HITL Review UI
 ├── evaluation/                 # metrics.py, evaluate.py
 ├── scripts/                    # generate_synthetic.py, finetune_trocr.py
-├── tests/                      # pytest 33 ข้อ
+├── tests/                      # pytest 40 ข้อ
 ├── models/calibration.json     # ตาราง calibration ความมั่นใจของ RapidOCR
 ├── reports/                    # รายงานผลการประเมิน
 ├── run.bat / run.sh / run.py   # เปิดระบบคลิกเดียว
@@ -186,6 +187,7 @@ confidence = min(ความมั่นใจรายตัวอักษร
 | R07 | อายุสินค้าไม่เกิน `MAX_SHELF_LIFE_YEARS` (ตรวจปีที่อ่านผิด) | error |
 | R08 | Lot เป็นตัวอักษร/ตัวเลข 3-20 ตัว | error |
 | R09 | สินค้าหมดอายุแล้ว | warning (แจ้งเตือน) |
+| R10 | พบวันที่อื่นในภาพที่ไม่ได้ถูกจัดเป็น EXP/MFG (อาจหา label ไม่เจอ) | error |
 
 รองรับปี พ.ศ. (2568 / 68), ชื่อเดือนไทย (ม.ค. – ธ.ค.) และอังกฤษ, label ภาษาไทย (หมดอายุ, ควรบริโภคก่อน, ผลิต, ล็อต)
 
@@ -231,23 +233,50 @@ API `GET /api/v1/metrics` ให้ First-Pass Yield, Exception Rate และ�
 ขั้นตอน: fit calibration บนชุด `data/calib` (250 ภาพ, seed 7) แล้ววัดผลบนชุด `data/test` (อีก 250 ภาพ, seed 11)
 ที่ไม่ได้ใช้ fit — รายงานเต็มอยู่ที่ `reports/rapidocr_test/report.md`
 
-| ตัวชี้วัด | ผล |
-|---|---|
-| CER (EXP / MFG / LOT) | 1.52% / 2.69% / 1.79% |
-| Field-Level Accuracy (EXP / MFG / LOT) | 98.8% / 98.0% / 98.0% |
-| Document Accuracy (OCR ล้วน ทุกฟิลด์ถูก) | 96.4% |
-| First-Pass Yield | 84.4% |
-| Exception Rate | 15.6% |
-| **Auto-Approved Precision** | **100% (211/211, False Accept = 0)** |
-| Final Accuracy (with HITL) | 100% |
+| ตัวชี้วัด | v1 | v2 (ปัจจุบัน) |
+|---|---|---|
+| CER (EXP / MFG / LOT) | 1.52% / 2.69% / 1.79% | 0.72% / 1.51% / 1.61% |
+| Field-Level Accuracy (EXP / MFG / LOT) | 98.8% / 98.0% / 98.0% | 98.0% / 98.4% / 98.8% |
+| Document Accuracy (OCR ล้วน ทุกฟิลด์ถูก) | 96.4% | 96.0% |
+| First-Pass Yield | 84.4% | 83.2% |
+| Exception Rate | 15.6% | 16.8% |
+| **Auto-Approved Precision** | **100% (211/211)** | **100% (208/208, False Accept = 0)** |
+| Final Accuracy (with HITL) | 100% | 100% |
 
-บนชุด calibration เอง: FPY 81.2%, Auto-Approved Precision 99.51% (ผิด 1 ภาพจาก 203)
+v2 = แก้ KIE (ป้าย BB/PROD/L:, ตัวคั่นวันที่ต้องตรงกัน, แก้ตัวอักษรที่ OCR อ่านพลาด), เพิ่มกฎ R10
+(พบวันที่ที่ไม่ได้ถูกจัดเข้าฟิลด์ใด) และ fit calibration ใหม่ — CER ลดลงทุกฟิลด์ แต่ความแม่นระดับเอกสาร
+ใกล้เคียงเดิม (ต่างกัน 1 ภาพจาก 250) ผลรุ่นเก่าเก็บไว้ที่ `reports/rapidocr_test_v1/`
+
+บนชุด calibration เอง (v2): Document Accuracy 96% (v1: 92%), FPY 81.6%, Auto-Approved Precision 99.02%
+(ผิด 2 ภาพ ทั้งคู่เป็นเลข LOT)
 
 > ภาพทดสอบเป็นภาพสังเคราะห์ที่ผ่าน augmentation (เอียง ±10°, เบลอ, หมึกบาง/หนา, คอนทราสต์ต่ำ, noise)
 > แต่ OCR ที่ใช้อ่านเป็น AI จริง ไม่ได้ดูเฉลย ก่อนใส่ในเล่มโปรเจค ควรเก็บภาพถ่ายจริง 300+ ภาพ
 > แล้ว fit calibration และวัดผลซ้ำด้วยคำสั่งเดียวกัน
 >
 > ผลของ mock engine (สำหรับทดสอบกลไก routing) อยู่ที่ `reports/mock_synthetic/report.md`
+
+## 7.1 แจ้งเตือนวันหมดอายุ
+
+ระบบตรวจ "ค่าสุดท้าย" ของวันหมดอายุของทุกภาพที่อนุมัติแล้ว (อัตโนมัติหรือคนตรวจแล้ว) ทันทีที่อนุมัติ
+และตรวจซ้ำทุก `ALERT_CHECK_MINUTES` นาที (ค่าเริ่มต้น 60) แจ้ง 3 ระดับ แต่ละระดับแจ้งครั้งเดียวต่อสินค้า
+
+| ระดับ | เงื่อนไข |
+|---|---|
+| ⏰ ใกล้หมดอายุ | เหลือไม่เกิน `ALERT_DAYS_BEFORE` วัน (ค่าเริ่มต้น 7) |
+| 🚨 หมดอายุวันนี้ | EXP = วันนี้ |
+| ⛔ หมดอายุแล้ว | EXP < วันนี้ |
+
+**ช่องทางแจ้งเตือน** (ตั้งใน `.env` เฉพาะช่องทางที่ต้องการ)
+- หน้าเว็บมือถือ แท็บ **แจ้งเตือน** + ป้ายสถานะบนผลสแกน + การแจ้งเตือนของเบราว์เซอร์ (กด "เปิดการแจ้งเตือนบนเครื่องนี้") ใช้ได้เลยไม่ต้องตั้งค่า
+- Streamlit แท็บ **แจ้งเตือนวันหมดอายุ** (กด "รับทราบ" เมื่อจัดการสินค้าแล้ว)
+- **Telegram**: คุยกับ @BotFather → `/newbot` → ได้ `TELEGRAM_BOT_TOKEN` ทักบอทหนึ่งครั้ง แล้วเปิด
+  `https://api.telegram.org/bot<TOKEN>/getUpdates` เพื่อดู `chat.id` ใส่ใน `TELEGRAM_CHAT_ID`
+- **Discord**: Server Settings → Integrations → Webhooks → Copy URL ใส่ `DISCORD_WEBHOOK_URL`
+- **Email**: `SMTP_HOST=smtp.gmail.com`, `SMTP_USER`, `SMTP_PASSWORD` (Gmail App Password), `ALERT_EMAIL_TO`
+- **Webhook**: `ALERT_WEBHOOK_URL` รับ JSON (ต่อกับ LINE Messaging API / n8n / Make ได้)
+
+ทดสอบช่องทาง: `POST /api/v1/alerts/test` (ใน Swagger http://localhost:8000/docs)
 
 ## 8. REST API
 
@@ -264,6 +293,10 @@ API `GET /api/v1/metrics` ให้ First-Pass Yield, Exception Rate และ�
 | GET | `/api/v1/export/documents` | JSON ผลลัพธ์สุดท้ายส่ง downstream |
 | GET | `/api/v1/export/feedback` | zip ของ feedback dataset (`feedback.jsonl` + crops) |
 | GET | `/api/v1/metrics` | FPY, Exception Rate, Correction Rate |
+| GET | `/api/v1/alerts` | แจ้งเตือนวันหมดอายุที่ยังไม่รับทราบ |
+| POST | `/api/v1/alerts/check` | ตรวจวันหมดอายุทุกภาพเดี๋ยวนี้ |
+| POST | `/api/v1/alerts/{id}/ack` | รับทราบแจ้งเตือน `{"user"}` |
+| POST | `/api/v1/alerts/test` | ส่งข้อความทดสอบไปทุกช่องทาง |
 
 ตัวอย่างผลลัพธ์ (ย่อ):
 ```json
@@ -285,6 +318,7 @@ API `GET /api/v1/metrics` ให้ First-Pass Yield, Exception Rate และ�
 | `documents` | ไฟล์, sha256, สถานะ, ความมั่นใจรวม, เหตุผล routing, ผลกฎ, ข้อมูล preprocessing, ข้อความ OCR |
 | `extracted_fields` | ชื่อฟิลด์, ค่าดิบ, ค่าทำนาย, ค่าสุดท้าย, ความมั่นใจ, รูปแบบวันที่, กรอบ (polygon), แก้ไขหรือไม่ |
 | `audit_logs` | **ใคร (actor), เมื่อไร, การกระทำ, ฟิลด์, ค่าเดิม, ค่าใหม่, เหตุผล** |
+| `expiry_alerts` | เอกสาร, ระดับแจ้งเตือน, วันหมดอายุ, lot, ช่องทางที่ส่งแล้ว, ผู้รับทราบ |
 | `feedback_samples` | ภาพต้นฉบับ, ภาพ crop, ข้อความที่ทำนาย, ข้อความที่ถูกต้อง, OCR ผิดหรือไม่, ใช้เทรนแล้วหรือยัง |
 
 เปลี่ยนเป็น PostgreSQL: `pip install "psycopg[binary]"` แล้วตั้ง

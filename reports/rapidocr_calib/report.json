@@ -9,92 +9,92 @@
     "threshold": 0.9,
     "fields": {
       "exp_date": {
-        "accuracy_all_images": 0.96,
-        "accuracy_when_present": 0.96,
-        "cer": 0.0465,
+        "accuracy_all_images": 0.98,
+        "accuracy_when_present": 0.98,
+        "cer": 0.022,
         "support": 250
       },
       "mfg_date": {
-        "accuracy_all_images": 0.96,
-        "accuracy_when_present": 0.9534,
-        "cer": 0.0374,
+        "accuracy_all_images": 0.988,
+        "accuracy_when_present": 0.9845,
+        "cer": 0.0112,
         "support": 193
       },
       "lot_number": {
-        "accuracy_all_images": 0.98,
-        "accuracy_when_present": 0.9758,
-        "cer": 0.0202,
+        "accuracy_all_images": 0.976,
+        "accuracy_when_present": 0.971,
+        "cer": 0.0184,
         "support": 207
       }
     },
-    "cer_exp": 0.0465,
-    "field_accuracy_exp": 0.96,
-    "document_accuracy_raw_ocr": 0.92,
-    "first_pass_yield": 0.812,
-    "exception_rate": 0.188,
-    "auto_approved": 203,
+    "cer_exp": 0.022,
+    "field_accuracy_exp": 0.98,
+    "document_accuracy_raw_ocr": 0.96,
+    "first_pass_yield": 0.816,
+    "exception_rate": 0.184,
+    "auto_approved": 204,
     "auto_approved_correct": 202,
-    "auto_approved_precision": 0.9951,
-    "false_accepts": 1,
-    "final_accuracy_with_hitl": 0.996,
-    "caught_errors_by_hitl": 19
+    "auto_approved_precision": 0.9902,
+    "false_accepts": 2,
+    "final_accuracy_with_hitl": 0.992,
+    "caught_errors_by_hitl": 8
   },
   "threshold_sweep": [
     {
       "threshold": 0.5,
-      "first_pass_yield": 0.852,
-      "exception_rate": 0.148,
-      "auto_precision": 0.9906,
+      "first_pass_yield": 0.864,
+      "exception_rate": 0.136,
+      "auto_precision": 0.9907,
       "false_accepts": 2
     },
     {
       "threshold": 0.6,
-      "first_pass_yield": 0.812,
-      "exception_rate": 0.188,
-      "auto_precision": 0.9951,
-      "false_accepts": 1
+      "first_pass_yield": 0.864,
+      "exception_rate": 0.136,
+      "auto_precision": 0.9907,
+      "false_accepts": 2
     },
     {
       "threshold": 0.7,
-      "first_pass_yield": 0.812,
-      "exception_rate": 0.188,
-      "auto_precision": 0.9951,
-      "false_accepts": 1
+      "first_pass_yield": 0.864,
+      "exception_rate": 0.136,
+      "auto_precision": 0.9907,
+      "false_accepts": 2
     },
     {
       "threshold": 0.8,
-      "first_pass_yield": 0.812,
-      "exception_rate": 0.188,
-      "auto_precision": 0.9951,
-      "false_accepts": 1
+      "first_pass_yield": 0.816,
+      "exception_rate": 0.184,
+      "auto_precision": 0.9902,
+      "false_accepts": 2
     },
     {
       "threshold": 0.85,
-      "first_pass_yield": 0.812,
-      "exception_rate": 0.188,
-      "auto_precision": 0.9951,
-      "false_accepts": 1
+      "first_pass_yield": 0.816,
+      "exception_rate": 0.184,
+      "auto_precision": 0.9902,
+      "false_accepts": 2
     },
     {
       "threshold": 0.9,
-      "first_pass_yield": 0.812,
-      "exception_rate": 0.188,
-      "auto_precision": 0.9951,
-      "false_accepts": 1
+      "first_pass_yield": 0.816,
+      "exception_rate": 0.184,
+      "auto_precision": 0.9902,
+      "false_accepts": 2
     },
     {
       "threshold": 0.95,
-      "first_pass_yield": 0.616,
-      "exception_rate": 0.384,
-      "auto_precision": 0.9935,
-      "false_accepts": 1
+      "first_pass_yield": 0.0,
+      "exception_rate": 1.0,
+      "auto_precision": null,
+      "false_accepts": 0
     },
     {
       "threshold": 0.98,
-      "first_pass_yield": 0.616,
-      "exception_rate": 0.384,
-      "auto_precision": 0.9935,
-      "false_accepts": 1
+      "first_pass_yield": 0.0,
+      "exception_rate": 1.0,
+      "auto_precision": null,
+      "false_accepts": 0
     }
   ]
 }

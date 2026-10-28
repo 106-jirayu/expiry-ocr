@@ -12,6 +12,7 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.alerts.service import expiry_info
 from app.models import Document, DocumentStatus, FeedbackSample
 
 FINAL_STATUSES = {DocumentStatus.AUTO_APPROVED, DocumentStatus.HUMAN_APPROVED, DocumentStatus.HUMAN_CORRECTED}
@@ -30,6 +31,7 @@ def document_json(doc: Document, include_audit: bool = True) -> dict:
         "status": doc.status.value,
         "is_final": final,
         "overall_confidence": doc.overall_confidence,
+        "expiry": expiry_info(doc),
         "engine": doc.engine,
         "route_reasons": doc.route_reasons,
         "fields": {
