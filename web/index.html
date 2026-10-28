@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Expiry Date AI OCR</title>
+<style>
+  :root {
+    --bg: #f4f6f8; --card: #ffffff; --text: #0f172a; --muted: #64748b; --line: #e2e8f0;
+    --brand: #0f766e; --brand-ink: #ffffff; --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7;
+    --bad: #b91c1c; --bad-bg: #fee2e2; --input: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b1220; --card: #111a2e; --text: #e5e7eb; --muted: #94a3b8; --line: #1f2a44;
+      --brand: #14b8a6; --brand-ink: #04211e; --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08;
+      --bad: #f87171; --bad-bg: #3b1212; --input: #0b1220; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--brand); color: var(--brand-ink);
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px; display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 17px; margin: 0; flex: 1; }
+  nav { display: flex; gap: 6px; padding: 10px 16px 0; }
+  nav button { flex: 1; border: 1px solid var(--line); background: var(--card); color: var(--text);
+    padding: 10px 6px; border-radius: 10px; font: inherit; font-size: 14px; }
+  nav button.active { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  main { padding: 12px 16px 96px; max-width: 720px; margin: 0 auto; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px;
+    border-radius: 12px; border: 0; font: inherit; font-weight: 600; background: var(--brand); color: var(--brand-ink); }
+  .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  .btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
+  .btn:disabled { opacity: .5; }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .camera { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 3/4; display: none; }
+  .camera video { width: 100%; height: 100%; object-fit: cover; }
+  .guide { position: absolute; inset: 30% 8%; border: 3px dashed rgba(255,255,255,.85); border-radius: 10px;
+    box-shadow: 0 0 0 999px rgba(0,0,0,.35); pointer-events: none; }
+  .guide span { position: absolute; top: -30px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; }
+  img.preview { width: 100%; border-radius: 10px; display: block; background: #000; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .b-ok { background: var(--ok-bg); color: var(--ok); } .b-warn { background: var(--warn-bg); color: var(--warn); }
+  .b-bad { background: var(--bad-bg); color: var(--bad); }
+  .field { border-top: 1px solid var(--line); padding: 10px 0; }
+  .field:first-of-type { border-top: 0; }
+  .field .name { font-size: 13px; color: var(--muted); }
+  .field .val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 4px; }
+  input { width: 100%; min-height: 46px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px;
+    font: inherit; background: var(--input); color: var(--text); }
+  ul.reasons { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+  .list-item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .list-item:first-child { border-top: 0; }
+  .list-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; background: #000; }
+  .list-item .grow { flex: 1; min-width: 0; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20;
+    background: var(--text); color: var(--bg); padding: 12px 14px; border-radius: 12px; display: none; }
+  .spinner { width: 20px; height: 20px; border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%;
+    animation: spin .8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 AI OCR วันหมดอายุ</h1>
+  <span id="health" class="muted" style="color:inherit;opacity:.85;font-size:12px"></span>
+</header>
+<nav>
+  <button data-tab="scan" class="active">ถ่าย/สแกน</button>
+  <button data-tab="queue">คิวตรวจ <span id="qcount"></span></button>
+  <button data-tab="history">ประวัติ</button>
+</nav>
+<main>
+  <!-- ====== SCAN ====== -->
+  <section id="tab-scan">
+    <div class="card">
+      <div class="camera" id="camera">
+        <video id="video" playsinline autoplay muted></video>
+        <div class="guide"><span>วางวันหมดอายุให้อยู่ในกรอบ</span></div>
+      </div>
+      <div id="camControls" class="row hidden" style="margin-top:10px">
+        <button class="btn" id="shutter">📸 ถ่ายเลย</button>
+        <button class="btn secondary" id="closeCam">ปิดกล้อง</button>
+      </div>
+      <div id="startControls">
+        <button class="btn" id="openCam">📷 เปิดกล้องถ่ายวันหมดอายุ</button>
+        <div class="row" style="margin-top:10px">
+          <label class="btn secondary" style="margin:0">📁 เลือกรูป / ถ่ายด้วยแอปกล้อง
+            <input id="fileInput" type="file" accept="image/*" capture="environment" class="hidden">
+          </label>
+        </div>
+        <button class="btn secondary" id="sampleBtn" style="margin-top:10px">🧪 ลองด้วยภาพตัวอย่าง</button>
+        <p class="muted" style="margin:10px 0 0">เคล็ดลับให้อ่านแม่น: ถ่ายให้ตัวเลขเต็มกรอบ ชัด ไม่สะท้อนแสง ถือให้นิ่ง</p>
+      </div>
+    </div>
+    <div id="quality" class="card hidden"></div>
+    <div id="result"></div>
+  </section>
+
+  <!-- ====== QUEUE ====== -->
+  <section id="tab-queue" class="hidden">
+    <div class="card"><div id="queueList" class="muted">กำลังโหลด…</div></div>
+  </section>
+
+  <!-- ====== HISTORY ====== -->
+  <section id="tab-history" class="hidden">
+    <div class="card" id="metrics"></div>
+    <div class="card"><div id="historyList" class="muted">กำลังโหลด…</div></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<canvas id="work" class="hidden"></canvas>
+
+<script>
+const API = location.origin + "/api/v1";
+const $ = (s) => document.querySelector(s);
+const FIELD_TH = { exp_date: "วันหมดอายุ (EXP)", mfg_date: "วันผลิต (MFG)", lot_number: "Lot Number" };
+const STATUS_TH = {
+  AUTO_APPROVED: ["อนุมัติอัตโนมัติ", "b-ok"], PENDING_REVIEW: ["รอคนตรวจ (HITL)", "b-warn"],
+  HUMAN_APPROVED: ["คนยืนยันแล้ว", "b-ok"], HUMAN_CORRECTED: ["คนแก้ไขแล้ว", "b-ok"], REJECTED: ["ปฏิเสธ", "b-bad"],
+};
+let THRESHOLD = 0.9, stream = null;
+
+function toast(msg, ms = 2600) { const t = $("#toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(t._h); t._h = setTimeout(() => (t.style.display = "none"), ms); }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function reviewerName() { try { return localStorage.getItem("reviewer") || ""; } catch { return ""; } }
+function saveReviewer(v) { try { localStorage.setItem("reviewer", v); } catch {} }
+
+// ---------- tabs
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+function showTab(name) {
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  ["scan", "queue", "history"].forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
+  if (name === "queue") loadQueue();
+  if (name === "history") loadHistory();
+}
+
+// ---------- camera (getUserMedia ต้องใช้ HTTPS หรือ localhost)
+$("#openCam").onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+    $("#video").srcObject = stream;
+    $("#camera").style.display = "block"; $("#camControls").classList.remove("hidden"); $("#startControls").classList.add("hidden");
+  } catch (e) {
+    toast("เปิดกล้องในเว็บไม่ได้ (ต้องเป็น HTTPS) — ใช้ปุ่ม 'เลือกรูป / ถ่ายด้วยแอปกล้อง' แทน", 4500);
+    $("#fileInput").click();
+  }
+};
+function closeCam() { stream?.getTracks().forEach((t) => t.stop()); stream = null;
+  $("#camera").style.display = "none"; $("#camControls").classList.add("hidden"); $("#startControls").classList.remove("hidden"); }
+$("#closeCam").onclick = closeCam;
+$("#shutter").onclick = () => {
+  const v = $("#video"), c = $("#work");
+  c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
+  c.toBlob((b) => { closeCam(); handleImage(b, "camera.jpg"); }, "image/jpeg", 0.95);
+};
+$("#sampleBtn").onclick = async () => {
+  try {
+    const list = await (await fetch(API + "/samples")).json();
+    if (!list.length) return toast("ไม่มีภาพตัวอย่างบนเซิร์ฟเวอร์");
+    const name = list[Math.floor(Math.random() * list.length)];
+    const blob = await (await fetch(`${API}/samples/${name}`)).blob();
+    upload(blob, name);
+  } catch (e) { toast("โหลดภาพตัวอย่างไม่ได้"); }
+};
+$("#fileInput").onchange = (e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
+
+// ---------- ตรวจคุณภาพภาพบนมือถือก่อนส่ง (ความคมชัด) + ย่อขนาดเพื่อส่งเร็ว
+async function loadBitmap(blob) {
+  try { return await createImageBitmap(blob, { imageOrientation: "from-image" }); }
+  catch { const url = URL.createObjectURL(blob); const img = new Image(); img.src = url; await img.decode(); return img; }
+}
+function sharpness(ctx, w, h) {
+  const d = ctx.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  let sum = 0, sq = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x, l = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w];
+    sum += l; sq += l * l; n++;
+  }
+  const mean = sum / n; return sq / n - mean * mean;
+}
+async function prepare(blob) {
+  const bmp = await loadBitmap(blob), max = 2000;
+  const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = $("#work"); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+  const ctx = c.getContext("2d", { willReadFrequently: true }); ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  // วัดความคมบนภาพย่อ 400px (เร็ว)
+  const t = document.createElement("canvas"), ts = Math.min(1, 400 / Math.max(c.width, c.height));
+  t.width = Math.round(c.width * ts); t.height = Math.round(c.height * ts);
+  const tctx = t.getContext("2d", { willReadFrequently: true }); tctx.drawImage(c, 0, 0, t.width, t.height);
+  const sharp = sharpness(tctx, t.width, t.height);
+  // ส่งไฟล์ต้นฉบับถ้าไม่ใหญ่มาก (คงความละเอียด/metadata ไว้ให้ OCR) ไม่เช่นนั้นส่งภาพที่ย่อแล้ว
+  const out = blob.size <= 8 * 1024 * 1024 ? blob : await new Promise((r) => c.toBlob(r, "image/jpeg", 0.92));
+  return { blob: out, sharp, w: c.width, h: c.height };
+}
+
+async function handleImage(blob, name) {
+  const q = $("#quality"); q.classList.remove("hidden");
+  q.innerHTML = '<div class="row" style="align-items:center"><div class="spinner" style="flex:0 0 20px"></div><div>กำลังตรวจคุณภาพภาพ…</div></div>';
+  const p = await prepare(blob);
+  if (p.sharp < 60) {
+    q.innerHTML = `<b style="color:var(--warn)">⚠️ ภาพอาจเบลอ (ความคม ${p.sharp.toFixed(0)})</b>
+      <p class="muted">ภาพเบลอทำให้อ่านผิดได้ แนะนำให้ถ่ายใหม่ให้ชัดขึ้น</p>
+      <div class="row"><button class="btn secondary" id="retake">ถ่ายใหม่</button><button class="btn" id="sendAnyway">ส่งต่อเลย</button></div>`;
+    $("#retake").onclick = () => { q.classList.add("hidden"); $("#openCam").click(); };
+    $("#sendAnyway").onclick = () => upload(p.blob, name);
+    return;
+  }
+  upload(p.blob, name);
+}
+
+async function upload(blob, name) {
+  const q = $("#quality");
+  q.innerHTML = '<div class="row" style="align-items:center"><div class="spinner" style="flex:0 0 20px"></div><div>AI กำลังอ่านวันหมดอายุ…</div></div>';
+  const fd = new FormData(); fd.append("file", blob, blob.type === "image/jpeg" && !/\.jpe?g$/i.test(name) ? name.replace(/\.\w+$/, "") + ".jpg" : name);
+  try {
+    const r = await fetch(API + "/documents", { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    const doc = await r.json(); q.classList.add("hidden"); renderResult(doc, $("#result")); refreshCount();
+  } catch (e) { q.innerHTML = `<b style="color:var(--bad)">ส่งภาพไม่สำเร็จ</b><p class="muted">${esc(e.message)}</p>`; }
+}
+
+// ---------- แสดงผล + HITL review บนมือถือ
+function reasonTh(r, rules) {
+  if (r.startsWith("LOW_CONFIDENCE:")) { const [f, v] = r.slice(15).split("="); return `ความมั่นใจต่ำ: ${FIELD_TH[f] || f} ${v.split(" ")[0]}`; }
+  if (r.startsWith("ENSEMBLE_DISAGREE:")) { const f = r.slice(18).split(" ")[0]; return `อ่านหลายรอบได้ไม่ตรงกัน: ${FIELD_TH[f] || f}`; }
+  if (r.startsWith("RULE_FAIL:")) { const [id, , f] = r.slice(10).split(":");
+    const rule = (rules || []).find((x) => x.rule_id === id && x.field === f && !x.passed); return `ไม่ผ่านกฎ ${id}: ${rule ? rule.message : f}`; }
+  return r;
+}
+function confColor(c) { return c >= THRESHOLD ? "var(--ok)" : c >= 0.7 ? "var(--warn)" : "var(--bad)"; }
+
+function renderResult(doc, el) {
+  const [st, cls] = STATUS_TH[doc.status] || [doc.status, "b-warn"];
+  const pending = doc.status === "PENDING_REVIEW";
+  const names = ["exp_date", "mfg_date", "lot_number"];
+  const fieldsHtml = names.map((n) => {
+    const f = doc.fields[n]; const val = f ? (f.value ?? f.predicted_value) : null; const c = f ? f.confidence : 0;
+    const input = n === "lot_number"
+      ? `<input data-field="${n}" value="${esc(val || "")}" placeholder="เช่น A2506B" autocapitalize="characters">`
+      : `<input data-field="${n}" type="date" value="${esc(val || "")}">`;
+    return `<div class="field"><div class="name">${FIELD_TH[n]}</div>
+      <div class="val">${val ? esc(val) : '<span class="muted">ไม่พบ</span>'}</div>
+      ${f && f.predicted_raw ? `<div class="muted">อ่านได้: “${esc(f.predicted_raw)}”</div>` : ""}
+      ${f ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>
+      <div class="muted">ความมั่นใจ ${(c * 100).toFixed(1)}%</div>` : ""}
+      ${pending ? `<label>แก้ไข (ถ้าค่าผิด)</label>${input}` : ""}</div>`;
+  }).join("");
+  const reasons = (doc.route_reasons || []).map((r) => `<li>${esc(reasonTh(r, doc.rules))}</li>`).join("");
+  const warns = (doc.rules || []).filter((r) => !r.passed && r.severity === "warning").map((r) => `<li>${esc(r.message)}</li>`).join("");
+  el.innerHTML = `<div class="card">
+      <div class="row" style="align-items:center;margin-bottom:10px"><div><span class="badge ${cls}">${st}</span></div>
+      <div class="muted" style="text-align:right">#${doc.document_id} · ${(doc.processing_ms / 1000).toFixed(1)} วิ</div></div>
+      <img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">
+      ${reasons ? `<div style="margin-top:10px"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
+      ${warns ? `<div style="margin-top:10px;color:var(--bad)"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
+    </div>
+    <div class="card">${fieldsHtml}
+      ${pending ? `<label>ชื่อผู้ตรวจ</label><input id="reviewer" value="${esc(reviewerName())}" placeholder="เช่น qa_somchai">
+        <label>เหตุผล (ถ้าแก้ไข)</label><input id="reason" placeholder="เช่น OCR อ่าน 8 เป็น 3">
+        <div class="row" style="margin-top:12px"><button class="btn" id="confirmBtn">✅ อนุมัติ / บันทึก</button></div>
+        <div class="row" style="margin-top:8px"><button class="btn danger" id="rejectBtn">ปฏิเสธภาพนี้</button></div>` : ""}
+    </div>`;
+  if (pending) {
+    el.querySelector("#confirmBtn").onclick = () => submitReview(doc, el);
+    el.querySelector("#rejectBtn").onclick = () => rejectDoc(doc, el);
+  }
+}
+
+async function submitReview(doc, el, force = false) {
+  const reviewer = el.querySelector("#reviewer").value.trim();
+  if (!reviewer) return toast("กรุณาใส่ชื่อผู้ตรวจ");
+  saveReviewer(reviewer);
+  const reason = el.querySelector("#reason").value.trim() || null;
+  const corrections = [...el.querySelectorAll("input[data-field]")].map((i) => {
+    const f = doc.fields[i.dataset.field]; const orig = f ? (f.predicted_value || "") : "";
+    const v = i.value.trim(); return v !== orig ? { name: i.dataset.field, value: v || null, reason } : null;
+  }).filter(Boolean);
+  const r = await fetch(`${API}/review/${doc.document_id}/submit`, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reviewer, corrections, force }) });
+  const body = await r.json();
+  if (r.status === 422 && body.detail?.details?.length) {
+    const msg = body.detail.details.map((d) => "• " + d.message).join("\n");
+    if (confirm("ค่ายังไม่ผ่านกฎธุรกิจ:\n" + msg + "\n\nยืนยันบันทึกค่านี้หรือไม่?")) return submitReview(doc, el, true);
+    return;
+  }
+  if (!r.ok) return toast(body.detail?.message || "บันทึกไม่สำเร็จ");
+  toast(corrections.length ? "บันทึกการแก้ไขแล้ว ✓ (เก็บเป็นข้อมูลสอนโมเดล)" : "อนุมัติแล้ว ✓");
+  renderResult(body, el); refreshCount();
+}
+async function rejectDoc(doc, el) {
+  const reviewer = el.querySelector("#reviewer").value.trim(); if (!reviewer) return toast("กรุณาใส่ชื่อผู้ตรวจ");
+  const reason = el.querySelector("#reason").value.trim() || prompt("เหตุผลที่ปฏิเสธ (เช่น ภาพไม่มีวันหมดอายุ)") || "";
+  if (!reason) return;
+  const r = await fetch(`${API}/review/${doc.document_id}/reject`, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reviewer, reason }) });
+  if (r.ok) { renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+}
+
+// ---------- queue / history
+function itemHtml(d) {
+  const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
+  return `<div class="list-item" data-id="${d.document_id}">
+    <img loading="lazy" src="${API}/documents/${d.document_id}/image?variant=original" alt="">
+    <div class="grow"><div><b>EXP ${esc(exp ? (exp.value ?? exp.predicted_value ?? "?") : "ไม่พบ")}</b></div>
+    <div class="muted">#${d.document_id} · มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%</div></div>
+    <span class="badge ${cls}">${st}</span></div>`;
+}
+async function openDoc(id) {
+  const d = await (await fetch(`${API}/documents/${id}`)).json(); showTab("scan"); renderResult(d, $("#result"));
+  window.scrollTo({ top: $("#result").offsetTop - 60, behavior: "smooth" });
+}
+function bindItems(container) { container.querySelectorAll(".list-item").forEach((x) => x.onclick = () => openDoc(x.dataset.id)); }
+async function loadQueue() {
+  const list = await (await fetch(`${API}/review/queue?limit=100`)).json();
+  $("#queueList").innerHTML = list.length ? list.map(itemHtml).join("") : "🎉 ไม่มีงานค้างในคิวตรวจ";
+  bindItems($("#queueList"));
+}
+async function loadHistory() {
+  const [list, m] = await Promise.all([fetch(`${API}/documents?limit=50`).then((r) => r.json()), fetch(`${API}/metrics`).then((r) => r.json())]);
+  const pct = (v) => v == null ? "-" : (v * 100).toFixed(1) + "%";
+  $("#metrics").innerHTML = `<b>ตัวชี้วัดการทำงาน</b>
+    <div class="row" style="margin-top:8px;text-align:center">
+      <div><div class="val" style="font-size:22px;font-weight:700">${m.total_documents}</div><div class="muted">ภาพทั้งหมด</div></div>
+      <div><div style="font-size:22px;font-weight:700">${pct(m.first_pass_yield)}</div><div class="muted">First-Pass Yield</div></div>
+      <div><div style="font-size:22px;font-weight:700">${pct(m.exception_rate)}</div><div class="muted">Exception Rate</div></div>
+    </div>`;
+  $("#historyList").innerHTML = list.length ? list.map(itemHtml).join("") : "ยังไม่มีภาพ";
+  bindItems($("#historyList"));
+}
+async function refreshCount() {
+  try { const q = await (await fetch(`${API}/review/queue?limit=500`)).json(); $("#qcount").textContent = q.length ? `(${q.length})` : ""; } catch {}
+}
+fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; }).catch(() => {});
+refreshCount();
+</script>
+</body>
+</html>

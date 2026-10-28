@@ -1,0 +1,29 @@
+# Deploy อัตโนมัติไป Hugging Face Spaces ทุกครั้งที่ push เข้า main
+# ตั้งค่าครั้งเดียว: GitHub repo -> Settings -> Secrets and variables -> Actions
+#   Secret   HF_TOKEN  = token จาก https://huggingface.co/settings/tokens (สิทธิ์ write)
+#   Variable HF_SPACE  = <ชื่อผู้ใช้ HF>/<ชื่อ Space>  เช่น jirayu/expiry-ocr
+name: Deploy to Hugging Face Spaces
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.HF_SPACE != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push to Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          cat deploy/hf_space_header.md README.md > README.hf.md && mv README.hf.md README.md
+          rm -rf .git
+          git init -b main
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git add -A
+          git commit -m "Deploy from GitHub ${GITHUB_SHA::7}"
+          git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main

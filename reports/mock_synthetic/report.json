@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "data": "data/synthetic",
+    "engine": "mock",
+    "passes": 3
+  },
+  "summary": {
+    "images": 300,
+    "threshold": 0.9,
+    "fields": {
+      "exp_date": {
+        "accuracy_all_images": 0.99,
+        "accuracy_when_present": 0.99,
+        "cer": 0.0083,
+        "support": 300
+      },
+      "mfg_date": {
+        "accuracy_all_images": 0.99,
+        "accuracy_when_present": 0.9871,
+        "cer": 0.0053,
+        "support": 233
+      },
+      "lot_number": {
+        "accuracy_all_images": 0.9667,
+        "accuracy_when_present": 0.9587,
+        "cer": 0.0097,
+        "support": 242
+      }
+    },
+    "cer_exp": 0.0083,
+    "field_accuracy_exp": 0.99,
+    "document_accuracy_raw_ocr": 0.9467,
+    "first_pass_yield": 0.7067,
+    "exception_rate": 0.2933,
+    "auto_approved": 212,
+    "auto_approved_correct": 212,
+    "auto_approved_precision": 1.0,
+    "false_accepts": 0,
+    "final_accuracy_with_hitl": 1.0,
+    "caught_errors_by_hitl": 16
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.5,
+      "first_pass_yield": 0.86,
+      "exception_rate": 0.14,
+      "auto_precision": 0.9884,
+      "false_accepts": 3
+    },
+    {
+      "threshold": 0.6,
+      "first_pass_yield": 0.8233,
+      "exception_rate": 0.1767,
+      "auto_precision": 0.996,
+      "false_accepts": 1
+    },
+    {
+      "threshold": 0.7,
+      "first_pass_yield": 0.8167,
+      "exception_rate": 0.1833,
+      "auto_precision": 1.0,
+      "false_accepts": 0
+    },
+    {
+      "threshold": 0.8,
+      "first_pass_yield": 0.78,
+      "exception_rate": 0.22,
+      "auto_precision": 1.0,
+      "false_accepts": 0
+    },
+    {
+      "threshold": 0.85,
+      "first_pass_yield": 0.7433,
+      "exception_rate": 0.2567,
+      "auto_precision": 1.0,
+      "false_accepts": 0
+    },
+    {
+      "threshold": 0.9,
+      "first_pass_yield": 0.7067,
+      "exception_rate": 0.2933,
+      "auto_precision": 1.0,
+      "false_accepts": 0
+    },
+    {
+      "threshold": 0.95,
+      "first_pass_yield": 0.67,
+      "exception_rate": 0.33,
+      "auto_precision": 1.0,
+      "false_accepts": 0
+    },
+    {
+      "threshold": 0.98,
+      "first_pass_yield": 0.57,
+      "exception_rate": 0.43,
+      "auto_precision": 1.0,
+      "false_accepts": 0
+    }
+  ]
+}

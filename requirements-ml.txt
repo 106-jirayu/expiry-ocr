@@ -1,0 +1,5 @@
+# ติดตั้งเพิ่มเมื่อต้องการใช้โมเดลจริง (TrOCR / VLM แบบ local)
+torch>=2.2
+transformers>=4.40
+sentencepiece
+accelerate
