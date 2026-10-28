@@ -1,0 +1,214 @@
+[
+  {
+    "image": "images/img_0021.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2026-12-23",
+      "mfg_date": "2026-08-05",
+      "lot_number": "W16720C",
+      "exp_text": "23.12.2026",
+      "mfg_text": "05.08.2026",
+      "lot_text": "W16720C",
+      "style": "DD.MM.YYYY"
+    },
+    "pred": {
+      "exp_date": "2026-12-23",
+      "mfg_date": "2026-08-05",
+      "lot_number": "EW16720C"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:lot_number agreement=67%"
+    ]
+  },
+  {
+    "image": "images/img_0041.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2026-05-20",
+      "mfg_date": "2026-02-24",
+      "lot_number": "C33732",
+      "exp_text": "20-05-2026",
+      "mfg_text": "24-02-2026",
+      "lot_text": "C33732",
+      "style": "DD-MM-YYYY"
+    },
+    "pred": {
+      "exp_date": "2026-05-20",
+      "mfg_date": null,
+      "lot_number": null
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
+      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:lot_number agreement=67%",
+      "RULE_FAIL:R02:date_format:mfg_date",
+      "RULE_FAIL:R08:lot_format:lot_number"
+    ]
+  },
+  {
+    "image": "images/img_0097.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2026-11-01",
+      "mfg_date": "2026-04-01",
+      "lot_number": "B8461",
+      "exp_text": "01 NOV 2026",
+      "mfg_text": "01 APR 2026",
+      "lot_text": "B8461",
+      "style": "DD MON YYYY"
+    },
+    "pred": {
+      "exp_date": "2026-11-01",
+      "mfg_date": "2026-04-01",
+      "lot_number": null
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
+      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
+      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
+      "RULE_FAIL:R08:lot_format:lot_number"
+    ]
+  },
+  {
+    "image": "images/img_0114.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2029-03-19",
+      "mfg_date": "2026-05-24",
+      "lot_number": null,
+      "exp_text": "2029-03-19",
+      "mfg_text": "2026-05-24",
+      "lot_text": null,
+      "style": "YYYY-MM-DD"
+    },
+    "pred": {
+      "exp_date": null,
+      "mfg_date": "2026-05-24"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=33%",
+      "RULE_FAIL:R03:digit_range:exp_date"
+    ]
+  },
+  {
+    "image": "images/img_0119.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2027-02-11",
+      "mfg_date": null,
+      "lot_number": null,
+      "exp_text": "11/02/27",
+      "mfg_text": null,
+      "lot_text": null,
+      "style": "DD/MM/YY"
+    },
+    "pred": {
+      "exp_date": "2027-02-11",
+      "mfg_date": "2027-02-11"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
+      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=33%",
+      "RULE_FAIL:R05:exp_after_mfg:exp_date",
+      "RULE_FAIL:R06:mfg_not_future:mfg_date"
+    ]
+  },
+  {
+    "image": "images/img_0188.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2029-05-28",
+      "mfg_date": null,
+      "lot_number": "N73090A",
+      "exp_text": "28-05-2029",
+      "mfg_text": null,
+      "lot_text": "N73090A",
+      "style": "DD-MM-YYYY"
+    },
+    "pred": {
+      "exp_date": null,
+      "mfg_date": "2029-05-28",
+      "lot_number": null
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "LOW_CONFIDENCE:lot_number=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:lot_number agreement=67%",
+      "RULE_FAIL:R02:date_format:exp_date",
+      "RULE_FAIL:R06:mfg_not_future:mfg_date",
+      "RULE_FAIL:R08:lot_format:lot_number"
+    ]
+  },
+  {
+    "image": "images/img_0193.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2027-08-05",
+      "mfg_date": "2026-07-17",
+      "lot_number": "C14879",
+      "exp_text": "05/08/2570",
+      "mfg_text": "17/07/2569",
+      "lot_text": "C14879",
+      "style": "BE DD/MM/YYYY"
+    },
+    "pred": {
+      "exp_date": "2027-08-05"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=33%"
+    ]
+  },
+  {
+    "image": "images/img_0231.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2027-12-24",
+      "mfg_date": "2026-09-13",
+      "lot_number": null,
+      "exp_text": "24/12/2570",
+      "mfg_text": "13/09/2569",
+      "lot_text": null,
+      "style": "BE DD/MM/YYYY"
+    },
+    "pred": {
+      "exp_date": "2027-12-24",
+      "mfg_date": null
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:mfg_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:mfg_date agreement=67%",
+      "RULE_FAIL:R02:date_format:mfg_date"
+    ]
+  },
+  {
+    "image": "images/img_0235.png",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2028-07-16",
+      "mfg_date": "2026-04-13",
+      "lot_number": "F37998G",
+      "exp_text": "16/07/28",
+      "mfg_text": "13/04/26",
+      "lot_text": "F37998G",
+      "style": "DD/MM/YY"
+    },
+    "pred": {
+      "exp_date": null,
+      "mfg_date": "2026-04-13",
+      "lot_number": "F37998G"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=59.87% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=67%",
+      "RULE_FAIL:R03:digit_range:exp_date"
+    ]
+  }
+]

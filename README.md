@@ -16,6 +16,10 @@
 
 ---
 
+| หน้าเว็บมือถือ | Streamlit HITL Review |
+|---|---|
+| <img src="docs/mobile.png" width="260"> | <img src="docs/streamlit.png" width="520"> |
+
 ## 1. สถาปัตยกรรมระบบ (5-Layer Architecture)
 
 ```mermaid
@@ -75,6 +79,10 @@ expiry-ocr/
 ├── evaluation/                 # metrics.py, evaluate.py
 ├── scripts/                    # generate_synthetic.py, finetune_trocr.py
 ├── tests/                      # pytest 33 ข้อ
+├── models/calibration.json     # ตาราง calibration ความมั่นใจของ RapidOCR
+├── reports/                    # รายงานผลการประเมิน
+├── run.bat / run.sh / run.py   # เปิดระบบคลิกเดียว
+├── Dockerfile                  # deploy (Hugging Face Spaces / Render / Cloud Run)
 ├── requirements.txt            # แกนหลัก (ไม่ต้องมี GPU)
 └── requirements-ml.txt         # torch + transformers สำหรับ TrOCR
 ```
@@ -218,23 +226,28 @@ API `GET /api/v1/metrics` ให้ First-Pass Yield, Exception Rate และ�
 **ชุดข้อมูลจริงสำหรับรายงาน**: ถ่ายฉลากจริง 300–1,000 ภาพ ใส่ ground truth ในไฟล์ `manifest.jsonl` รูปแบบเดียวกับ
 `data/synthetic/manifest.jsonl` แล้วรัน evaluate ด้วย `--engine trocr` หรือ `vlm`
 
-### ผลตัวอย่าง (Mock engine บนภาพสังเคราะห์ 300 ภาพ, ensemble 3 รอบ, threshold 0.90)
+### ผลการทดสอบ AI OCR จริง (RapidOCR, ensemble 3 รอบ, threshold 0.90)
+
+ขั้นตอน: fit calibration บนชุด `data/calib` (250 ภาพ, seed 7) แล้ววัดผลบนชุด `data/test` (อีก 250 ภาพ, seed 11)
+ที่ไม่ได้ใช้ fit — รายงานเต็มอยู่ที่ `reports/rapidocr_test/report.md`
 
 | ตัวชี้วัด | ผล |
 |---|---|
-| CER (EXP) | 0.83% |
-| Field-Level Accuracy (EXP / MFG / LOT) | 99.00% / 99.00% / 96.67% |
-| First-Pass Yield | 70.67% |
-| Exception Rate | 29.33% |
-| **Auto-Approved Precision** | **100% (212/212, False Accept = 0)** |
+| CER (EXP / MFG / LOT) | 1.52% / 2.69% / 1.79% |
+| Field-Level Accuracy (EXP / MFG / LOT) | 98.8% / 98.0% / 98.0% |
+| Document Accuracy (OCR ล้วน ทุกฟิลด์ถูก) | 96.4% |
+| First-Pass Yield | 84.4% |
+| Exception Rate | 15.6% |
+| **Auto-Approved Precision** | **100% (211/211, False Accept = 0)** |
 | Final Accuracy (with HITL) | 100% |
 
-ภาพสังเคราะห์ผ่าน augmentation หนัก (เอียง ±10°, เบลอ, หมึกบาง/หนา, คอนทราสต์ต่ำ, noise) และ mock engine
-จำลองความผิดพลาดแบบ OCR จริง รวมถึง "ผิดแต่มั่นใจ" — ตัวเลขนี้ **ใช้แสดงว่ากลไก routing ทำงาน** เท่านั้น
-ผลที่จะใส่ในเล่มโปรเจคต้องรันใหม่ด้วย TrOCR/VLM บนภาพถ่ายจริง
+บนชุด calibration เอง: FPY 81.2%, Auto-Approved Precision 99.51% (ผิด 1 ภาพจาก 203)
 
-จากตาราง threshold sweep: threshold 0.50 ทำให้ FPY 86% แต่มีภาพอนุมัติผิด 3 ภาพ ส่วน 0.70 ขึ้นไปไม่มีภาพผิดเลย
-แสดงให้เห็น trade-off ระหว่างความแม่นยำกับภาระงานของคน
+> ภาพทดสอบเป็นภาพสังเคราะห์ที่ผ่าน augmentation (เอียง ±10°, เบลอ, หมึกบาง/หนา, คอนทราสต์ต่ำ, noise)
+> แต่ OCR ที่ใช้อ่านเป็น AI จริง ไม่ได้ดูเฉลย ก่อนใส่ในเล่มโปรเจค ควรเก็บภาพถ่ายจริง 300+ ภาพ
+> แล้ว fit calibration และวัดผลซ้ำด้วยคำสั่งเดียวกัน
+>
+> ผลของ mock engine (สำหรับทดสอบกลไก routing) อยู่ที่ `reports/mock_synthetic/report.md`
 
 ## 8. REST API
 
