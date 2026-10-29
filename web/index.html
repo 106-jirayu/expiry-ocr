@@ -308,6 +308,7 @@
       <h2><svg class="i"><use href="#i-bell"/></svg>แจ้งเตือนวันหมดอายุ</h2>
       <p class="muted" style="margin:0 0 12px">ระบบตรวจทุกชั่วโมง แจ้งเมื่อสินค้าใกล้หมดอายุ (ภายใน <span id="adays">7</span> วัน) หมดวันนี้ หรือหมดอายุแล้ว</p>
       <button class="btn secondary" id="notifBtn"><svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้</button>
+      <div class="notice hidden" id="notifHelp"></div>
     </div>
     <div class="card"><div id="alertList" class="muted">กำลังโหลด…</div></div>
   </section>
@@ -682,11 +683,31 @@ async function pollAlerts() {
     seenAlerts = ids;
   } catch {}
 }
-$("#notifBtn").onclick = async () => {
-  if (!("Notification" in window)) return toast("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
-  const p = await Notification.requestPermission();
-  toast(p === "granted" ? "เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)" : "ไม่ได้รับอนุญาตให้แจ้งเตือน");
+// เบราว์เซอร์ให้ขอสิทธิ์แจ้งเตือนได้เฉพาะ HTTPS หรือ localhost และถ้าเคยกด "บล็อก" ไว้ ต้องปลดบล็อกเองที่แถบที่อยู่
+const NOTIF_HELP = {
+  insecure: "<b>เปิดการแจ้งเตือนผ่านลิงก์ http://ไอพี ไม่ได้</b>เบราว์เซอร์อนุญาตเฉพาะ HTTPS หรือ localhost — บนคอมให้เปิดผ่าน http://localhost:8000 ส่วนมือถือต้องใช้ลิงก์ HTTPS (เช่นเวอร์ชันที่ deploy ขึ้นเว็บ)",
+  denied: "<b>เบราว์เซอร์บล็อกการแจ้งเตือนของเว็บนี้ไว้</b>วิธีปลดบล็อก: กดไอคอน ⓘ หรือ 🔒 หน้าช่องที่อยู่เว็บ → การแจ้งเตือน (Notifications) → เลือก \"อนุญาต\" แล้วรีเฟรชหน้านี้ (มือถือ: ⋮ → การตั้งค่า → การตั้งค่าเว็บไซต์ → การแจ้งเตือน)",
+  unsupported: "<b>เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน</b>ลองใช้ Chrome หรือ Edge (iPhone ต้อง \"เพิ่มไปยังหน้าจอโฮม\" ก่อน)",
 };
+function notifState() {
+  if (!window.isSecureContext) return "insecure";
+  if (!("Notification" in window)) return "unsupported";
+  return Notification.permission;   // default | granted | denied
+}
+function renderNotif() {
+  const s = notifState(), b = $("#notifBtn"), help = $("#notifHelp");
+  b.innerHTML = s === "granted" ? "✅ เปิดการแจ้งเตือนบนเครื่องนี้แล้ว" : `<svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้`;
+  b.disabled = s === "granted";
+  help.innerHTML = NOTIF_HELP[s] || ""; help.classList.toggle("hidden", !NOTIF_HELP[s]);
+}
+$("#notifBtn").onclick = async () => {
+  if (notifState() === "default") {
+    const p = await Notification.requestPermission();
+    if (p === "granted") { toast("เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)"); new Notification("✅ เปิดการแจ้งเตือนแล้ว", { body: "จะแจ้งเมื่อมีสินค้าใกล้หมดอายุ" }); }
+  }
+  renderNotif();
+};
+renderNotif();
 setInterval(pollAlerts, 60000);
 
 // ---------- queue / history
