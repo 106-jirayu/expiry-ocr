@@ -3,80 +3,199 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f766e">
+<meta name="theme-color" content="#0d9488">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Expiry Date AI OCR</title>
 <style>
   :root {
-    --bg: #f4f6f8; --card: #ffffff; --text: #0f172a; --muted: #64748b; --line: #e2e8f0;
-    --brand: #0f766e; --brand-ink: #ffffff; --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7;
-    --bad: #b91c1c; --bad-bg: #fee2e2; --input: #ffffff;
+    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #e5eaf0;
+    --brand: #0d9488; --brand-2: #0f766e; --brand-soft: #ccfbf1; --brand-ink: #ffffff;
+    --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --bad: #dc2626; --bad-bg: #fee2e2;
+    --input: #ffffff; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+    --hero: linear-gradient(135deg, #0d9488 0%, #0f766e 55%, #115e59 100%);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0b1220; --card: #111a2e; --text: #e5e7eb; --muted: #94a3b8; --line: #1f2a44;
-      --brand: #14b8a6; --brand-ink: #04211e; --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08;
-      --bad: #f87171; --bad-bg: #3b1212; --input: #0b1220; }
+    :root { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #1f2b40;
+      --brand: #2dd4bf; --brand-2: #14b8a6; --brand-soft: #0d3b38; --brand-ink: #032421;
+      --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
+      --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+      --hero: linear-gradient(135deg, #115e59 0%, #134e4a 60%, #0f2f2d 100%); }
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif; }
-  header { position: sticky; top: 0; z-index: 5; background: var(--brand); color: var(--brand-ink);
-    padding: calc(10px + env(safe-area-inset-top)) 16px 10px; display: flex; align-items: center; gap: 10px; }
-  header h1 { font-size: 17px; margin: 0; flex: 1; }
-  nav { display: flex; gap: 6px; padding: 10px 16px 0; }
-  nav button { flex: 1; border: 1px solid var(--line); background: var(--card); color: var(--text);
-    padding: 10px 6px; border-radius: 10px; font: inherit; font-size: 14px; }
-  nav button.active { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
-  main { padding: 12px 16px 96px; max-width: 720px; margin: 0 auto; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px;
-    border-radius: 12px; border: 0; font: inherit; font-weight: 600; background: var(--brand); color: var(--brand-ink); }
-  .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
-  .btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
+    font: 16px/1.55 "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+
+  /* ---------- header */
+  header { background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; }
+  .hwrap { max-width: 720px; margin: 0 auto; }
+  .brandrow { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.16); display: grid; place-items: center; }
+  .brandrow h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
+  .brandrow .sub { font-size: 12.5px; opacity: .85; }
+  .chip-h { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 10px 12px; }
+  .stat b { display: block; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 12px; opacity: .85; }
+
+  main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 720px; margin: -38px auto 0; position: relative; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 18px 4px 8px; text-transform: uppercase; letter-spacing: .02em; }
+
+  /* ---------- bottom tab bar */
+  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: color-mix(in srgb, var(--card) 92%, transparent);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  nav.tabs .inner { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+  nav.tabs button { border: 0; background: none; color: var(--muted); padding: 6px 2px; border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 500; position: relative; }
+  nav.tabs button.active { color: var(--brand); }
+  nav.tabs button.active .pill { background: var(--brand-soft); }
+  nav.tabs .pill { padding: 3px 16px; border-radius: 999px; display: grid; place-items: center; transition: background .2s; }
+  nav.tabs .count { position: absolute; top: 2px; left: calc(50% + 8px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+    background: var(--bad); color: #fff; font-size: 11px; line-height: 18px; font-weight: 700; }
+  nav.tabs .count:empty { display: none; }
+
+  /* ---------- controls */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 0 16px;
+    border-radius: 14px; border: 0; font-weight: 600; background: var(--brand); color: var(--brand-ink);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 30%, transparent); transition: transform .08s; }
+  .btn:active { transform: scale(.98); }
+  .btn.secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+  .btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent); box-shadow: none; }
+  .btn.sm { width: auto; min-height: 38px; padding: 0 14px; border-radius: 10px; font-size: 14px; }
   .btn:disabled { opacity: .5; }
   .row { display: flex; gap: 10px; } .row > * { flex: 1; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .muted { color: var(--muted); font-size: 14px; }
-  .camera { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 3/4; display: none; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 500; }
+  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px;
+    font: inherit; background: var(--input); color: var(--text); }
+  input:focus { outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent); border-color: var(--brand); }
+
+  /* ---------- scan */
+  .scan-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px 8px 6px; }
+  .scan-ring { width: 92px; height: 92px; border-radius: 28px; background: var(--brand-soft); color: var(--brand);
+    display: grid; place-items: center; margin-bottom: 10px; }
+  .scan-ring svg.i { width: 44px; height: 44px; }
+  .scan-hero h2 { justify-content: center; font-size: 18px; }
+  .tips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 10px 0 2px; }
+  .tip { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); }
+  .camera { position: relative; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 3/4; display: none; }
   .camera video { width: 100%; height: 100%; object-fit: cover; }
-  .guide { position: absolute; inset: 30% 8%; border: 3px dashed rgba(255,255,255,.85); border-radius: 10px;
-    box-shadow: 0 0 0 999px rgba(0,0,0,.35); pointer-events: none; }
-  .guide span { position: absolute; top: -30px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; }
-  img.preview { width: 100%; border-radius: 10px; display: block; background: #000; }
-  .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .guide { position: absolute; inset: 32% 8%; border-radius: 14px; box-shadow: 0 0 0 999px rgba(0,0,0,.45); pointer-events: none; }
+  .guide::before, .guide::after { content: ""; position: absolute; inset: 0; border-radius: 14px; border: 3px solid #fff;
+    -webkit-mask: linear-gradient(#000 0 0) top left / 28px 28px no-repeat, linear-gradient(#000 0 0) top right / 28px 28px no-repeat,
+      linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat;
+            mask: linear-gradient(#000 0 0) top left / 28px 28px no-repeat, linear-gradient(#000 0 0) top right / 28px 28px no-repeat,
+      linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat; }
+  .guide span { position: absolute; top: -34px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; font-weight: 500; }
+  img.preview { width: 100%; border-radius: 14px; display: block; background: #000; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
   .b-ok { background: var(--ok-bg); color: var(--ok); } .b-warn { background: var(--warn-bg); color: var(--warn); }
   .b-bad { background: var(--bad-bg); color: var(--bad); }
-  .field { border-top: 1px solid var(--line); padding: 10px 0; }
-  .field:first-of-type { border-top: 0; }
-  .field .name { font-size: 13px; color: var(--muted); }
-  .field .val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 4px; }
-  .bar i { display: block; height: 100%; }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 4px; }
-  input { width: 100%; min-height: 46px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px;
-    font: inherit; background: var(--input); color: var(--text); }
+
+  .exp-hero { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 16px; margin-top: 12px; }
+  .exp-hero.ok { background: var(--ok-bg); color: var(--ok); } .exp-hero.warn { background: var(--warn-bg); color: var(--warn); }
+  .exp-hero.bad { background: var(--bad-bg); color: var(--bad); }
+  .exp-hero .big { font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .exp-hero .lbl { font-size: 12px; font-weight: 500; opacity: .9; }
+  .exp-hero .txt { flex: 1; } .exp-hero .txt b { display: block; font-size: 15px; }
+
+  .field { padding: 12px 0; border-top: 1px solid var(--line); }
+  .field:first-child { border-top: 0; padding-top: 0; }
+  .field .top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .field .name { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .field .val { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .field .pct { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; border-radius: 3px; }
   ul.reasons { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
-  .list-item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
-  .list-item:first-child { border-top: 0; }
-  .list-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; background: #000; }
+  .notice { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
+  .notice.bad { background: var(--bad-bg); color: var(--bad); }
+  .notice b { display: block; margin-bottom: 2px; }
+
+  /* ---------- lists */
+  .list-item { color: var(--text); font-size: 16px; display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
+  .list-item:first-child { border-top: 0; padding-top: 2px; }
+  .list-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; background: #000; flex: 0 0 auto; }
   .list-item .grow { flex: 1; min-width: 0; }
-  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20;
-    background: var(--text); color: var(--bg); padding: 12px 14px; border-radius: 12px; display: none; }
+  .list-item .t { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .empty { text-align: center; padding: 26px 10px; color: var(--muted); }
+  .empty .e { font-size: 34px; display: block; margin-bottom: 6px; }
+
+  /* ---------- calendar */
+  .cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .cal-head h2 { flex: 1; margin: 0; font-size: 18px; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-2); display: grid; place-items: center; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); padding: 2px 0 6px; }
+  .cal-day { aspect-ratio: 1 / 1.08; border: 0; border-radius: 12px; background: transparent; padding: 4px 2px; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; font-variant-numeric: tabular-nums; }
+  .cal-day .n { font-size: 14.5px; font-weight: 500; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; }
+  .cal-day.out .n { color: var(--muted); opacity: .45; }
+  .cal-day.today .n { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+  .cal-day.sel { background: var(--brand-soft); }
+  .cal-day .dots { display: flex; gap: 3px; }
+  .cal-day .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .cal-day .cnt { position: absolute; top: 2px; right: 3px; font-size: 10px; font-weight: 700; color: var(--muted); }
+  .d-bad { background: var(--bad); } .d-warn { background: var(--warn); } .d-ok { background: var(--ok); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sum div { border-radius: 14px; padding: 10px 12px; }
+  .sum b { display: block; font-size: 22px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .sum span { font-size: 12.5px; font-weight: 500; }
+  .day-group { font-size: 13.5px; font-weight: 600; color: var(--muted); padding: 12px 0 2px; border-top: 1px solid var(--line); }
+  .day-group:first-child { border-top: 0; padding-top: 0; }
+
+  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 20; max-width: 560px; margin: 0 auto;
+    background: var(--text); color: var(--bg); padding: 12px 16px; border-radius: 14px; display: none; box-shadow: var(--shadow); }
   .spinner { width: 20px; height: 20px; border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%;
-    animation: spin .8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+    animation: spin .8s linear infinite; flex: 0 0 20px; } @keyframes spin { to { transform: rotate(360deg); } }
+  .loading { display: flex; align-items: center; gap: 10px; }
   .hidden { display: none !important; }
+  section { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M16 3v3M8 3v3M3 9.5h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-hist" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2M8.5 2h7M7 16h10"/></symbol>
+  <symbol id="i-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol>
+</svg>
+
 <header>
-  <h1>📦 AI OCR วันหมดอายุ</h1>
-  <span id="health" class="muted" style="color:inherit;opacity:.85;font-size:12px"></span>
+  <div class="hwrap">
+    <div class="brandrow">
+      <div class="logo"><svg class="i"><use href="#i-box"/></svg></div>
+      <div><h1>AI OCR วันหมดอายุ</h1><div class="sub">สแกน · ตรวจ · แจ้งเตือน</div></div>
+      <span class="chip-h" id="health">กำลังเชื่อมต่อ…</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="s-total">–</b><span>สแกนทั้งหมด</span></div>
+      <div class="stat"><b id="s-queue">–</b><span>รอตรวจ</span></div>
+      <div class="stat"><b id="s-alert">–</b><span>ใกล้/หมดอายุ</span></div>
+    </div>
+  </div>
 </header>
-<nav>
-  <button data-tab="scan" class="active">ถ่าย/สแกน</button>
-  <button data-tab="queue">คิวตรวจ <span id="qcount"></span></button>
-  <button data-tab="alerts">แจ้งเตือน <span id="acount"></span></button>
-  <button data-tab="history">ประวัติ</button>
-</nav>
+
 <main>
   <!-- ====== SCAN ====== -->
   <section id="tab-scan">
@@ -85,19 +204,24 @@
         <video id="video" playsinline autoplay muted></video>
         <div class="guide"><span>วางวันหมดอายุให้อยู่ในกรอบ</span></div>
       </div>
-      <div id="camControls" class="row hidden" style="margin-top:10px">
-        <button class="btn" id="shutter">📸 ถ่ายเลย</button>
+      <div id="camControls" class="row hidden" style="margin-top:12px">
+        <button class="btn" id="shutter"><svg class="i"><use href="#i-cam"/></svg>ถ่ายเลย</button>
         <button class="btn secondary" id="closeCam">ปิดกล้อง</button>
       </div>
       <div id="startControls">
-        <button class="btn" id="openCam">📷 เปิดกล้องถ่ายวันหมดอายุ</button>
-        <div class="row" style="margin-top:10px">
-          <label class="btn secondary" style="margin:0">📁 เลือกรูป / ถ่ายด้วยแอปกล้อง
+        <div class="scan-hero">
+          <div class="scan-ring"><svg class="i"><use href="#i-scan"/></svg></div>
+          <h2>สแกนวันหมดอายุบนฉลาก</h2>
+          <div class="muted">AI อ่าน EXP · MFG · LOT ให้อัตโนมัติ ถ้าไม่มั่นใจจะส่งให้คนตรวจ</div>
+          <div class="tips"><span class="tip">ตัวเลขเต็มกรอบ</span><span class="tip">ไม่สะท้อนแสง</span><span class="tip">ถือให้นิ่ง</span></div>
+        </div>
+        <button class="btn" id="openCam" style="margin-top:12px"><svg class="i"><use href="#i-cam"/></svg>เปิดกล้องถ่ายวันหมดอายุ</button>
+        <div class="grid2" style="margin-top:10px">
+          <label class="btn secondary" style="margin:0;color:var(--text);font-size:15px"><svg class="i"><use href="#i-img"/></svg>เลือกรูป
             <input id="fileInput" type="file" accept="image/*" capture="environment" class="hidden">
           </label>
+          <button class="btn secondary" id="sampleBtn" style="font-size:15px"><svg class="i"><use href="#i-flask"/></svg>ภาพตัวอย่าง</button>
         </div>
-        <button class="btn secondary" id="sampleBtn" style="margin-top:10px">🧪 ลองด้วยภาพตัวอย่าง</button>
-        <p class="muted" style="margin:10px 0 0">เคล็ดลับให้อ่านแม่น: ถ่ายให้ตัวเลขเต็มกรอบ ชัด ไม่สะท้อนแสง ถือให้นิ่ง</p>
       </div>
     </div>
     <div id="quality" class="card hidden"></div>
@@ -106,36 +230,76 @@
 
   <!-- ====== QUEUE ====== -->
   <section id="tab-queue" class="hidden">
-    <div class="card"><div id="queueList" class="muted">กำลังโหลด…</div></div>
+    <div class="card">
+      <h2><svg class="i"><use href="#i-queue"/></svg>คิวรอคนตรวจ</h2>
+      <p class="muted" style="margin:0 0 10px">ภาพที่ AI ไม่มั่นใจ หรือไม่ผ่านกฎธุรกิจ แตะเพื่อตรวจและแก้ไข</p>
+      <div id="queueList" class="muted">กำลังโหลด…</div>
+    </div>
+  </section>
+
+  <!-- ====== CALENDAR ====== -->
+  <section id="tab-calendar" class="hidden">
+    <div class="card">
+      <div class="cal-head">
+        <button class="icon-btn" id="calPrev" aria-label="เดือนก่อน"><svg class="i"><use href="#i-l"/></svg></button>
+        <h2 id="calTitle" style="justify-content:center;text-align:center">–</h2>
+        <button class="icon-btn" id="calNext" aria-label="เดือนถัดไป"><svg class="i"><use href="#i-r"/></svg></button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="legend">
+        <span><i class="d-bad"></i>หมดอายุแล้ว / วันนี้</span>
+        <span><i class="d-warn"></i>ใกล้หมดอายุ</span>
+        <span><i class="d-ok"></i>ยังไม่หมดอายุ</span>
+      </div>
+      <button class="btn secondary sm" id="calToday" style="margin-top:12px">กลับไปวันนี้</button>
+    </div>
+    <div class="sum" id="calSum"></div>
+    <div class="section-title" id="calListTitle">สินค้าที่หมดอายุในเดือนนี้</div>
+    <div class="card"><div id="calList" class="muted">กำลังโหลด…</div></div>
   </section>
 
   <!-- ====== ALERTS ====== -->
   <section id="tab-alerts" class="hidden">
     <div class="card">
-      <b>แจ้งเตือนวันหมดอายุ</b>
-      <p class="muted" style="margin:4px 0 10px">ระบบตรวจทุกชั่วโมง แจ้งเมื่อสินค้าใกล้หมดอายุ (ภายใน <span id="adays">7</span> วัน) หมดวันนี้ หรือหมดอายุแล้ว</p>
-      <button class="btn secondary" id="notifBtn">🔔 เปิดการแจ้งเตือนบนเครื่องนี้</button>
+      <h2><svg class="i"><use href="#i-bell"/></svg>แจ้งเตือนวันหมดอายุ</h2>
+      <p class="muted" style="margin:0 0 12px">ระบบตรวจทุกชั่วโมง แจ้งเมื่อสินค้าใกล้หมดอายุ (ภายใน <span id="adays">7</span> วัน) หมดวันนี้ หรือหมดอายุแล้ว</p>
+      <button class="btn secondary" id="notifBtn"><svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้</button>
     </div>
     <div class="card"><div id="alertList" class="muted">กำลังโหลด…</div></div>
   </section>
 
   <!-- ====== HISTORY ====== -->
   <section id="tab-history" class="hidden">
-    <div class="card" id="metrics"></div>
+    <div class="sum" id="metrics"></div>
+    <div class="section-title">ภาพล่าสุด</div>
     <div class="card"><div id="historyList" class="muted">กำลังโหลด…</div></div>
   </section>
 </main>
+
+<nav class="tabs">
+  <div class="inner">
+    <button data-tab="scan" class="active"><span class="pill"><svg class="i"><use href="#i-scan"/></svg></span>สแกน</button>
+    <button data-tab="queue"><span class="pill"><svg class="i"><use href="#i-queue"/></svg></span>คิวตรวจ<span class="count" id="qcount"></span></button>
+    <button data-tab="calendar"><span class="pill"><svg class="i"><use href="#i-cal"/></svg></span>ปฏิทิน</button>
+    <button data-tab="alerts"><span class="pill"><svg class="i"><use href="#i-bell"/></svg></span>แจ้งเตือน<span class="count" id="acount"></span></button>
+    <button data-tab="history"><span class="pill"><svg class="i"><use href="#i-hist"/></svg></span>ประวัติ</button>
+  </div>
+</nav>
 <div class="toast" id="toast"></div>
 <canvas id="work" class="hidden"></canvas>
 
 <script>
 const API = location.origin + "/api/v1";
 const $ = (s) => document.querySelector(s);
+const TABS = ["scan", "queue", "calendar", "alerts", "history"];
 const FIELD_TH = { exp_date: "วันหมดอายุ (EXP)", mfg_date: "วันผลิต (MFG)", lot_number: "Lot Number" };
 const STATUS_TH = {
-  AUTO_APPROVED: ["อนุมัติอัตโนมัติ", "b-ok"], PENDING_REVIEW: ["รอคนตรวจ (HITL)", "b-warn"],
+  AUTO_APPROVED: ["อนุมัติอัตโนมัติ", "b-ok"], PENDING_REVIEW: ["รอคนตรวจ", "b-warn"],
   HUMAN_APPROVED: ["คนยืนยันแล้ว", "b-ok"], HUMAN_CORRECTED: ["คนแก้ไขแล้ว", "b-ok"], REJECTED: ["ปฏิเสธ", "b-bad"],
 };
+const MONTH_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const MONTH_S = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+const DOW_TH = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 let THRESHOLD = 0.9, stream = null;
 
 function toast(msg, ms = 2600) { const t = $("#toast"); t.textContent = msg; t.style.display = "block";
@@ -143,15 +307,21 @@ function toast(msg, ms = 2600) { const t = $("#toast"); t.textContent = msg; t.s
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function reviewerName() { try { return localStorage.getItem("reviewer") || ""; } catch { return ""; } }
 function saveReviewer(v) { try { localStorage.setItem("reviewer", v); } catch {} }
+function iso(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function thaiDate(s) { if (!s) return "-"; const [y, m, d] = s.split("-").map(Number); return `${d} ${MONTH_S[m - 1]} ${y + 543}`; }
+function empty(e, text) { return `<div class="empty"><span class="e">${e}</span>${text}</div>`; }
+const loading = (t) => `<div class="loading"><div class="spinner"></div><div>${t}</div></div>`;
 
 // ---------- tabs
-document.querySelectorAll("nav button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
 function showTab(name) {
-  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
-  ["scan", "queue", "alerts", "history"].forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  TABS.forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
   if (name === "queue") loadQueue();
   if (name === "history") loadHistory();
   if (name === "alerts") loadAlerts();
+  if (name === "calendar") loadCalendar();
+  window.scrollTo({ top: 0 });
 }
 
 // ---------- camera (getUserMedia ต้องใช้ HTTPS หรือ localhost)
@@ -162,7 +332,7 @@ $("#openCam").onclick = async () => {
     $("#video").srcObject = stream;
     $("#camera").style.display = "block"; $("#camControls").classList.remove("hidden"); $("#startControls").classList.add("hidden");
   } catch (e) {
-    toast("เปิดกล้องในเว็บไม่ได้ (ต้องเป็น HTTPS) — ใช้ปุ่ม 'เลือกรูป / ถ่ายด้วยแอปกล้อง' แทน", 4500);
+    toast("เปิดกล้องในเว็บไม่ได้ (ต้องเป็น HTTPS) — ใช้ปุ่ม 'เลือกรูป' แทน", 4500);
     $("#fileInput").click();
   }
 };
@@ -180,7 +350,7 @@ $("#sampleBtn").onclick = async () => {
     if (!list.length) return toast("ไม่มีภาพตัวอย่างบนเซิร์ฟเวอร์");
     const name = list[Math.floor(Math.random() * list.length)];
     const blob = await (await fetch(`${API}/samples/${name}`)).blob();
-    upload(blob, name);
+    $("#quality").classList.remove("hidden"); upload(blob, name);
   } catch (e) { toast("โหลดภาพตัวอย่างไม่ได้"); }
 };
 $("#fileInput").onchange = (e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
@@ -216,13 +386,11 @@ async function prepare(blob) {
 }
 
 async function handleImage(blob, name) {
-  const q = $("#quality"); q.classList.remove("hidden");
-  q.innerHTML = '<div class="row" style="align-items:center"><div class="spinner" style="flex:0 0 20px"></div><div>กำลังตรวจคุณภาพภาพ…</div></div>';
+  const q = $("#quality"); q.classList.remove("hidden"); q.innerHTML = loading("กำลังตรวจคุณภาพภาพ…");
   const p = await prepare(blob);
   if (p.sharp < 60) {
-    q.innerHTML = `<b style="color:var(--warn)">⚠️ ภาพอาจเบลอ (ความคม ${p.sharp.toFixed(0)})</b>
-      <p class="muted">ภาพเบลอทำให้อ่านผิดได้ แนะนำให้ถ่ายใหม่ให้ชัดขึ้น</p>
-      <div class="row"><button class="btn secondary" id="retake">ถ่ายใหม่</button><button class="btn" id="sendAnyway">ส่งต่อเลย</button></div>`;
+    q.innerHTML = `<div class="notice" style="margin:0"><b>⚠️ ภาพอาจเบลอ (ความคม ${p.sharp.toFixed(0)})</b>ภาพเบลอทำให้อ่านผิดได้ แนะนำให้ถ่ายใหม่ให้ชัดขึ้น</div>
+      <div class="row" style="margin-top:12px"><button class="btn secondary" id="retake">ถ่ายใหม่</button><button class="btn" id="sendAnyway">ส่งต่อเลย</button></div>`;
     $("#retake").onclick = () => { q.classList.add("hidden"); $("#openCam").click(); };
     $("#sendAnyway").onclick = () => upload(p.blob, name);
     return;
@@ -231,14 +399,14 @@ async function handleImage(blob, name) {
 }
 
 async function upload(blob, name) {
-  const q = $("#quality");
-  q.innerHTML = '<div class="row" style="align-items:center"><div class="spinner" style="flex:0 0 20px"></div><div>AI กำลังอ่านวันหมดอายุ…</div></div>';
+  const q = $("#quality"); q.innerHTML = loading("AI กำลังอ่านวันหมดอายุ…");
   const fd = new FormData(); fd.append("file", blob, blob.type === "image/jpeg" && !/\.jpe?g$/i.test(name) ? name.replace(/\.\w+$/, "") + ".jpg" : name);
   try {
     const r = await fetch(API + "/documents", { method: "POST", body: fd });
     if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
     const doc = await r.json(); q.classList.add("hidden"); renderResult(doc, $("#result")); refreshCount();
-  } catch (e) { q.innerHTML = `<b style="color:var(--bad)">ส่งภาพไม่สำเร็จ</b><p class="muted">${esc(e.message)}</p>`; }
+    $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (e) { q.innerHTML = `<div class="notice bad" style="margin:0"><b>ส่งภาพไม่สำเร็จ</b>${esc(e.message)}</div>`; }
 }
 
 // ---------- แสดงผล + HITL review บนมือถือ
@@ -257,30 +425,31 @@ function renderResult(doc, el) {
   const names = ["exp_date", "mfg_date", "lot_number"];
   const fieldsHtml = names.map((n) => {
     const f = doc.fields[n]; const val = f ? (f.value ?? f.predicted_value) : null; const c = f ? f.confidence : 0;
+    const shown = val && n !== "lot_number" ? thaiDate(val) : val;
     const input = n === "lot_number"
       ? `<input data-field="${n}" value="${esc(val || "")}" placeholder="เช่น A2506B" autocapitalize="characters">`
       : `<input data-field="${n}" type="date" value="${esc(val || "")}">`;
-    return `<div class="field"><div class="name">${FIELD_TH[n]}</div>
-      <div class="val">${val ? esc(val) : '<span class="muted">ไม่พบ</span>'}</div>
-      ${f && f.predicted_raw ? `<div class="muted">อ่านได้: “${esc(f.predicted_raw)}”</div>` : ""}
-      ${f ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>
-      <div class="muted">ความมั่นใจ ${(c * 100).toFixed(1)}%</div>` : ""}
+    return `<div class="field"><div class="top"><div class="name">${FIELD_TH[n]}</div>
+      ${f ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
+      <div class="val">${val ? esc(shown) : '<span class="muted">ไม่พบ</span>'}</div>
+      ${f && f.predicted_raw ? `<div class="muted">AI อ่านได้: “${esc(f.predicted_raw)}”</div>` : ""}
+      ${f ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
       ${pending ? `<label>แก้ไข (ถ้าค่าผิด)</label>${input}` : ""}</div>`;
   }).join("");
   const reasons = (doc.route_reasons || []).map((r) => `<li>${esc(reasonTh(r, doc.rules))}</li>`).join("");
   const warns = (doc.rules || []).filter((r) => !r.passed && r.severity === "warning").map((r) => `<li>${esc(r.message)}</li>`).join("");
   el.innerHTML = `<div class="card">
-      <div class="row" style="align-items:center;margin-bottom:10px"><div><span class="badge ${cls}">${st}</span></div>
+      <div class="row" style="align-items:center;margin-bottom:12px"><div><span class="badge ${cls}">${st}</span></div>
       <div class="muted" style="text-align:right">#${doc.document_id} · ${(doc.processing_ms / 1000).toFixed(1)} วิ</div></div>
       <img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">
       ${expiryBanner(doc.expiry)}
-      ${reasons ? `<div style="margin-top:10px"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
-      ${warns ? `<div style="margin-top:10px;color:var(--bad)"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
+      ${reasons ? `<div class="notice"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
+      ${warns ? `<div class="notice bad"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
     </div>
     <div class="card">${fieldsHtml}
       ${pending ? `<label>ชื่อผู้ตรวจ</label><input id="reviewer" value="${esc(reviewerName())}" placeholder="เช่น qa_somchai">
         <label>เหตุผล (ถ้าแก้ไข)</label><input id="reason" placeholder="เช่น OCR อ่าน 8 เป็น 3">
-        <div class="row" style="margin-top:12px"><button class="btn" id="confirmBtn">✅ อนุมัติ / บันทึก</button></div>
+        <div class="row" style="margin-top:14px"><button class="btn" id="confirmBtn">✅ อนุมัติ / บันทึก</button></div>
         <div class="row" style="margin-top:8px"><button class="btn danger" id="rejectBtn">ปฏิเสธภาพนี้</button></div>` : ""}
     </div>`;
   if (pending) {
@@ -319,27 +488,83 @@ async function rejectDoc(doc, el) {
   if (r.ok) { renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
 }
 
-// ---------- แจ้งเตือนวันหมดอายุ
-const KIND = { EXPIRED: ["⛔ หมดอายุแล้ว", "b-bad"], EXPIRES_TODAY: ["🚨 หมดอายุวันนี้", "b-bad"],
-  EXPIRING_SOON: ["⏰ ใกล้หมดอายุ", "b-warn"], OK: ["✅ ยังไม่หมดอายุ", "b-ok"] };
+// ---------- สถานะวันหมดอายุ
+const KIND = { EXPIRED: ["หมดอายุแล้ว", "b-bad", "bad", "d-bad"], EXPIRES_TODAY: ["หมดอายุวันนี้", "b-bad", "bad", "d-bad"],
+  EXPIRING_SOON: ["ใกล้หมดอายุ", "b-warn", "warn", "d-warn"], OK: ["ยังไม่หมดอายุ", "b-ok", "ok", "d-ok"] };
+const SEVERITY = { EXPIRED: 3, EXPIRES_TODAY: 3, EXPIRING_SOON: 2, OK: 1 };
 function daysText(d) { return d < 0 ? `หมดอายุไปแล้ว ${-d} วัน` : d === 0 ? "หมดอายุวันนี้" : `เหลืออีก ${d} วัน`; }
 function expiryBanner(e) {
   if (!e) return "";
-  const [t, cls] = KIND[e.status] || KIND.OK;
-  return `<div class="row" style="margin-top:10px;align-items:center"><div><span class="badge ${cls}">${t}</span></div>
-    <div class="muted" style="text-align:right">${daysText(e.days_left)}</div></div>`;
+  const [t, , tone] = KIND[e.status] || KIND.OK;
+  const big = e.days_left < 0 ? -e.days_left : e.days_left;
+  const lbl = e.days_left < 0 ? "วันที่เลยมา" : e.days_left === 0 ? "วันนี้" : "วันที่เหลือ";
+  return `<div class="exp-hero ${tone}"><div style="text-align:center;min-width:64px"><div class="big">${e.days_left === 0 ? "!" : big}</div><div class="lbl">${lbl}</div></div>
+    <div class="txt"><b>${t}</b>หมดอายุ ${thaiDate(e.exp_date)}${e.days_left ? " · " + daysText(e.days_left) : ""}</div></div>`;
 }
+function docRow(a, right = "") {
+  const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
+  return `<div class="list-item" data-id="${a.document_id}"><img loading="lazy" src="${API}/documents/${a.document_id}/image?variant=original" alt="">
+    <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
+    <div class="muted">Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
+    <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
+}
+
+// ---------- ปฏิทินวันหมดอายุ
+let calMonth = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+let calSel = null, calRows = [];
+$("#calPrev").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); calSel = null; loadCalendar(); };
+$("#calNext").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); calSel = null; loadCalendar(); };
+$("#calToday").onclick = () => { const d = new Date(); calMonth = new Date(d.getFullYear(), d.getMonth(), 1); calSel = iso(d); loadCalendar(); };
+
+async function loadCalendar() {
+  const first = new Date(calMonth), start = new Date(first); start.setDate(1 - first.getDay());
+  const end = new Date(start); end.setDate(start.getDate() + 41);
+  $("#calTitle").textContent = `${MONTH_TH[first.getMonth()]} ${first.getFullYear() + 543}`;
+  try { calRows = await (await fetch(`${API}/calendar?start=${iso(start)}&end=${iso(end)}`)).json(); }
+  catch { calRows = []; toast("โหลดข้อมูลปฏิทินไม่ได้"); }
+  const byDay = {};
+  for (const r of calRows) (byDay[r.exp_date] ||= []).push(r);
+  const today = iso(new Date());
+  let html = DOW_TH.map((d) => `<div class="cal-dow">${d}</div>`).join("");
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i); const k = iso(d), items = byDay[k] || [];
+    const kinds = [...new Set(items.map((x) => KIND[x.status][3]))].sort();
+    html += `<button class="cal-day${d.getMonth() !== first.getMonth() ? " out" : ""}${k === today ? " today" : ""}${k === calSel ? " sel" : ""}" data-day="${k}">
+      <span class="n">${d.getDate()}</span>${items.length ? `<span class="dots">${kinds.map((c) => `<i class="dot ${c}"></i>`).join("")}</span>` : ""}
+      ${items.length > 1 ? `<span class="cnt">${items.length}</span>` : ""}</button>`;
+  }
+  $("#calGrid").innerHTML = html;
+  $("#calGrid").querySelectorAll("[data-day]").forEach((b) => b.onclick = () => { calSel = calSel === b.dataset.day ? null : b.dataset.day; loadCalendarList(); markSel(); });
+  loadCalendarList();
+}
+function markSel() { $("#calGrid").querySelectorAll("[data-day]").forEach((b) => b.classList.toggle("sel", b.dataset.day === calSel)); }
+function loadCalendarList() {
+  const ym = iso(calMonth).slice(0, 7);
+  const month = calRows.filter((r) => r.exp_date.startsWith(ym));
+  const c = (f) => month.filter(f).length;
+  $("#calSum").innerHTML = `
+    <div class="b-bad"><b>${c((r) => SEVERITY[r.status] === 3)}</b><span>หมดแล้ว/วันนี้</span></div>
+    <div class="b-warn"><b>${c((r) => r.status === "EXPIRING_SOON")}</b><span>ใกล้หมดอายุ</span></div>
+    <div class="b-ok"><b>${c((r) => r.status === "OK")}</b><span>ยังไม่หมด</span></div>`;
+  const rows = calSel ? calRows.filter((r) => r.exp_date === calSel) : month;
+  $("#calListTitle").textContent = calSel ? `หมดอายุวันที่ ${thaiDate(calSel)} (${rows.length})` : `สินค้าที่หมดอายุใน${MONTH_TH[calMonth.getMonth()]} (${rows.length})`;
+  if (!rows.length) { $("#calList").innerHTML = empty("📅", calSel ? "ไม่มีสินค้าหมดอายุวันนี้" : "ไม่มีสินค้าหมดอายุในเดือนนี้"); return; }
+  let html = "", last = null;
+  for (const r of rows) {
+    if (!calSel && r.exp_date !== last) { html += `<div class="day-group">${thaiDate(r.exp_date)}</div>`; last = r.exp_date; }
+    html += docRow(r);
+  }
+  $("#calList").innerHTML = html; bindItems($("#calList"));
+}
+
+// ---------- แจ้งเตือน
 async function loadAlerts() {
   const list = await (await fetch(`${API}/alerts`)).json();
-  $("#alertList").innerHTML = list.length ? list.map((a) => {
-    const [t, cls] = KIND[a.kind] || ["", ""];
-    return `<div class="list-item"><img loading="lazy" src="${API}/documents/${a.document_id}/image?variant=original" alt="">
-      <div class="grow"><div><span class="badge ${cls}">${t}</span></div>
-      <div><b>EXP ${esc(a.exp_date)}</b> · ${daysText(a.days_left)}</div>
-      <div class="muted">Lot ${esc(a.lot_number || "-")} · #${a.document_id}</div></div>
-      <button class="btn secondary" style="width:auto;min-height:40px;padding:0 12px" data-ack="${a.id}">รับทราบ</button></div>`;
-  }).join("") : "ไม่มีสินค้าใกล้หมดอายุ 👍";
-  $("#alertList").querySelectorAll("[data-ack]").forEach((b) => b.onclick = async () => {
+  $("#alertList").innerHTML = list.length ? list.map((a) =>
+    docRow(a, `<button class="btn secondary sm" data-ack="${a.id}">รับทราบ</button>`)).join("") : empty("👍", "ไม่มีสินค้าใกล้หมดอายุ");
+  bindItems($("#alertList"));
+  $("#alertList").querySelectorAll("[data-ack]").forEach((b) => b.onclick = async (ev) => {
+    ev.stopPropagation();
     const user = reviewerName() || prompt("ชื่อผู้รับทราบ") || ""; if (!user) return; saveReviewer(user);
     await fetch(`${API}/alerts/${b.dataset.ack}/ack`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user }) });
@@ -350,11 +575,11 @@ let seenAlerts = null;
 async function pollAlerts() {
   try {
     const list = await (await fetch(`${API}/alerts`)).json();
-    $("#acount").textContent = list.length ? `(${list.length})` : "";
+    $("#acount").textContent = list.length || ""; $("#s-alert").textContent = list.length;
     const ids = new Set(list.map((a) => a.id));
     if (seenAlerts) {
       for (const a of list.filter((x) => !seenAlerts.has(x.id))) {
-        toast(`${a.title}: EXP ${a.exp_date}`, 5000);
+        toast(`${a.title}: EXP ${thaiDate(a.exp_date)}`, 5000);
         if ("Notification" in window && Notification.permission === "granted")
           new Notification(a.title, { body: a.message });
       }
@@ -367,44 +592,47 @@ $("#notifBtn").onclick = async () => {
   const p = await Notification.requestPermission();
   toast(p === "granted" ? "เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)" : "ไม่ได้รับอนุญาตให้แจ้งเตือน");
 };
-setInterval(pollAlerts, 60000); pollAlerts();
+setInterval(pollAlerts, 60000);
 
 // ---------- queue / history
 function itemHtml(d) {
   const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
+  const v = exp ? (exp.value ?? exp.predicted_value) : null;
   return `<div class="list-item" data-id="${d.document_id}">
     <img loading="lazy" src="${API}/documents/${d.document_id}/image?variant=original" alt="">
-    <div class="grow"><div><b>EXP ${esc(exp ? (exp.value ?? exp.predicted_value ?? "?") : "ไม่พบ")}</b></div>
+    <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
     <div class="muted">#${d.document_id} · มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%</div></div>
     <span class="badge ${cls}">${st}</span></div>`;
 }
 async function openDoc(id) {
   const d = await (await fetch(`${API}/documents/${id}`)).json(); showTab("scan"); renderResult(d, $("#result"));
-  window.scrollTo({ top: $("#result").offsetTop - 60, behavior: "smooth" });
+  $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function bindItems(container) { container.querySelectorAll(".list-item").forEach((x) => x.onclick = () => openDoc(x.dataset.id)); }
 async function loadQueue() {
   const list = await (await fetch(`${API}/review/queue?limit=100`)).json();
-  $("#queueList").innerHTML = list.length ? list.map(itemHtml).join("") : "🎉 ไม่มีงานค้างในคิวตรวจ";
+  $("#queueList").innerHTML = list.length ? list.map(itemHtml).join("") : empty("🎉", "ไม่มีงานค้างในคิวตรวจ");
   bindItems($("#queueList"));
 }
 async function loadHistory() {
   const [list, m] = await Promise.all([fetch(`${API}/documents?limit=50`).then((r) => r.json()), fetch(`${API}/metrics`).then((r) => r.json())]);
   const pct = (v) => v == null ? "-" : (v * 100).toFixed(1) + "%";
-  $("#metrics").innerHTML = `<b>ตัวชี้วัดการทำงาน</b>
-    <div class="row" style="margin-top:8px;text-align:center">
-      <div><div class="val" style="font-size:22px;font-weight:700">${m.total_documents}</div><div class="muted">ภาพทั้งหมด</div></div>
-      <div><div style="font-size:22px;font-weight:700">${pct(m.first_pass_yield)}</div><div class="muted">First-Pass Yield</div></div>
-      <div><div style="font-size:22px;font-weight:700">${pct(m.exception_rate)}</div><div class="muted">Exception Rate</div></div>
-    </div>`;
-  $("#historyList").innerHTML = list.length ? list.map(itemHtml).join("") : "ยังไม่มีภาพ";
+  $("#metrics").innerHTML = `
+    <div class="card" style="margin:0"><b style="font-size:22px">${m.total_documents}</b><span class="muted">ภาพทั้งหมด</span></div>
+    <div class="card" style="margin:0"><b style="font-size:22px;color:var(--ok)">${pct(m.first_pass_yield)}</b><span class="muted">First-Pass Yield</span></div>
+    <div class="card" style="margin:0"><b style="font-size:22px;color:var(--warn)">${pct(m.exception_rate)}</b><span class="muted">Exception Rate</span></div>`;
+  $("#historyList").innerHTML = list.length ? list.map(itemHtml).join("") : empty("🗂️", "ยังไม่มีภาพ");
   bindItems($("#historyList"));
 }
 async function refreshCount() {
-  try { const q = await (await fetch(`${API}/review/queue?limit=500`)).json(); $("#qcount").textContent = q.length ? `(${q.length})` : ""; } catch {}
+  try {
+    const [q, m] = await Promise.all([fetch(`${API}/review/queue?limit=500`).then((r) => r.json()), fetch(`${API}/metrics`).then((r) => r.json())]);
+    $("#qcount").textContent = q.length || ""; $("#s-queue").textContent = q.length; $("#s-total").textContent = m.total_documents;
+  } catch {}
   pollAlerts();
 }
-fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; }).catch(() => {});
+fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `● ${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
+  .catch(() => { $("#health").textContent = "ออฟไลน์"; });
 refreshCount();
 </script>
 </body>

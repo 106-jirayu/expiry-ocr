@@ -5,6 +5,7 @@ import io
 import json
 import tempfile
 import zipfile
+from datetime import date
 from pathlib import Path
 
 import cv2
@@ -149,6 +150,13 @@ def metrics(db: Session = Depends(get_session)):
 
 
 # ------------------------------------------------------------ แจ้งเตือนวันหมดอายุ
+@router.get("/calendar", summary="ปฏิทินวันหมดอายุ: สินค้าที่อนุมัติแล้วซึ่งหมดอายุในช่วงวันที่ (YYYY-MM-DD)")
+def expiry_calendar(start: date, end: date, db: Session = Depends(get_session)):
+    if end < start or (end - start).days > 400:
+        raise HTTPException(400, "ช่วงวันที่ไม่ถูกต้อง (end ต้องไม่ก่อน start และไม่เกิน 400 วัน)")
+    return alerts.calendar(db, start, end)
+
+
 @router.get("/alerts", summary="รายการแจ้งเตือนวันหมดอายุ (ใกล้หมด / หมดวันนี้ / หมดแล้ว)")
 def list_alerts(include_acknowledged: bool = False, db: Session = Depends(get_session)):
     return [alerts.alert_json(a) for a in alerts.list_alerts(db, only_open=not include_acknowledged)]

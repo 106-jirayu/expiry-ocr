@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.alerts import notifier
 from app.config import settings
-from app.models import AlertKind, Document, DocumentStatus, ExpiryAlert
+from app.models import AlertKind, Document, DocumentStatus, ExpiryAlert, ExtractedField
 
 FINAL = (DocumentStatus.AUTO_APPROVED, DocumentStatus.HUMAN_APPROVED, DocumentStatus.HUMAN_CORRECTED)
 TITLE = {
@@ -122,3 +122,26 @@ def alert_json(a: ExpiryAlert) -> dict:
             "lot_number": a.lot_number, "message": a.message, "channels_sent": a.channels_sent,
             "acknowledged": a.acknowledged, "acknowledged_by": a.acknowledged_by,
             "created_at": a.created_at.isoformat() if a.created_at else None}
+
+
+def calendar(session: Session, start: date, end: date, today: date | None = None) -> list[dict]:
+    """สินค้าที่อนุมัติแล้วและหมดอายุในช่วง [start, end] สำหรับหน้าปฏิทิน (เรียงตามวันหมดอายุ)"""
+    today = today or date.today()
+    q = (select(Document, ExtractedField.final_value)
+         .join(ExtractedField, ExtractedField.document_id == Document.id)
+         .where(Document.status.in_(FINAL), ExtractedField.name == "exp_date",
+                ExtractedField.final_value >= start.isoformat(), ExtractedField.final_value <= end.isoformat())
+         .order_by(ExtractedField.final_value, Document.id))
+    out = []
+    for doc, value in session.execute(q):
+        try:
+            exp = date.fromisoformat(value)
+        except ValueError:
+            continue
+        kind = classify(exp, today, settings.alert_days_before)
+        lot, mfg = doc.field("lot_number"), doc.field("mfg_date")
+        out.append({"document_id": doc.id, "exp_date": exp.isoformat(), "days_left": (exp - today).days,
+                    "status": kind.value if kind else "OK", "doc_status": doc.status.value,
+                    "lot_number": lot.final_value if lot else None, "mfg_date": mfg.final_value if mfg else None,
+                    "filename": doc.filename})
+    return out

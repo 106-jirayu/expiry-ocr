@@ -38,3 +38,18 @@ def test_alert_created_once_and_acknowledged(tmp_path):
         assert ack["acknowledged"] and ack["acknowledged_by"] == "store1"
         assert all(a["id"] != mine[0]["id"] for a in c.get("/api/v1/alerts").json())
         assert c.post("/api/v1/alerts/test").json() == {"configured": [], "sent": []}
+
+
+def test_calendar_lists_approved_expiry_dates(tmp_path):
+    generate(tmp_path, 1, seed=98)
+    img = next((tmp_path / "images").glob("*.png"))
+    exp = (date.today() + timedelta(days=20)).isoformat()
+    with TestClient(app) as c:
+        doc = c.post("/api/v1/documents", files={"file": (img.name, img.read_bytes(), "image/png")}).json()
+        c.post(f"/api/v1/review/{doc['document_id']}/submit", json={
+            "reviewer": "qa1", "force": True, "corrections": [{"name": "exp_date", "value": exp}]})
+        rows = c.get("/api/v1/calendar", params={"start": exp, "end": exp}).json()
+        mine = [r for r in rows if r["document_id"] == doc["document_id"]]
+        assert len(mine) == 1 and mine[0]["exp_date"] == exp and mine[0]["status"] == "OK"
+        assert mine[0]["days_left"] == 20
+        assert c.get("/api/v1/calendar", params={"start": exp, "end": "2000-01-01"}).status_code == 400
