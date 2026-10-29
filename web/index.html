@@ -138,12 +138,14 @@
   .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-2); display: grid; place-items: center; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cal-dow { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); padding: 2px 0 6px; }
-  .cal-day { aspect-ratio: 1 / 1.08; border: 0; border-radius: 12px; background: transparent; padding: 4px 2px; position: relative;
+  .cal-day { aspect-ratio: 1 / 1.08; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 4px 2px; position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; font-variant-numeric: tabular-nums; }
   .cal-day .n { font-size: 14.5px; font-weight: 500; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; }
+  .cal-day.out { background: transparent; border-style: dashed; opacity: .6; }
   .cal-day.out .n { color: var(--muted); opacity: .45; }
+  .cal-day.today { border-color: var(--brand); }
   .cal-day.today .n { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
-  .cal-day.sel { background: var(--brand-soft); }
+  .cal-day.sel { background: var(--brand-soft); border-color: var(--brand); border-width: 2px; }
   .cal-day .dots { display: flex; gap: 3px; }
   .cal-day .dot { width: 6px; height: 6px; border-radius: 50%; }
   .cal-day .cnt { position: absolute; top: 2px; right: 3px; font-size: 10px; font-weight: 700; color: var(--muted); }
