@@ -11,14 +11,14 @@
 <title>Expiry Date AI OCR</title>
 <style>
   :root {
-    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #e5eaf0;
+    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #cbd5e1;
     --brand: #0d9488; --brand-2: #0f766e; --brand-soft: #ccfbf1; --brand-ink: #ffffff;
     --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --bad: #dc2626; --bad-bg: #fee2e2;
     --input: #ffffff; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
     --hero: linear-gradient(135deg, #0d9488 0%, #0f766e 55%, #115e59 100%);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #1f2b40;
+    :root { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
       --brand: #2dd4bf; --brand-2: #14b8a6; --brand-soft: #0d3b38; --brand-ink: #032421;
       --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
       --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
@@ -44,7 +44,7 @@
   .stat span { font-size: 12px; opacity: .85; }
 
   main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 720px; margin: -38px auto 0; position: relative; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
   .card h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
   .section-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 18px 4px 8px; text-transform: uppercase; letter-spacing: .02em; }
 
@@ -67,7 +67,7 @@
     border-radius: 14px; border: 0; font-weight: 600; background: var(--brand); color: var(--brand-ink);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 30%, transparent); transition: transform .08s; }
   .btn:active { transform: scale(.98); }
-  .btn.secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+  .btn.secondary { background: var(--card-2); color: var(--text); border: 1.5px solid var(--line); box-shadow: none; }
   .btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent); box-shadow: none; }
   .btn.sm { width: auto; min-height: 38px; padding: 0 14px; border-radius: 10px; font-size: 14px; }
   .btn:disabled { opacity: .5; }
@@ -75,7 +75,7 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .muted { color: var(--muted); font-size: 14px; }
   label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 500; }
-  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px;
+  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px;
     font: inherit; background: var(--input); color: var(--text); }
   input:focus { outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent); border-color: var(--brand); }
 
@@ -95,6 +95,7 @@
       linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat;
             mask: linear-gradient(#000 0 0) top left / 28px 28px no-repeat, linear-gradient(#000 0 0) top right / 28px 28px no-repeat,
       linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat; }
+  .guide { outline: 2px solid rgba(255,255,255,.85); outline-offset: -2px; }
   .guide span { position: absolute; top: -34px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; font-weight: 500; }
   img.preview { width: 100%; border-radius: 14px; display: block; background: #000; }
 
