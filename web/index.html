@@ -222,7 +222,17 @@
           </label>
           <button class="btn secondary" id="sampleBtn" style="font-size:15px"><svg class="i"><use href="#i-flask"/></svg>ภาพตัวอย่าง</button>
         </div>
+        <button class="btn secondary" id="manualBtn" style="margin-top:10px;font-size:15px">✍️ กรอกวันหมดอายุเอง (ไม่ต้องถ่ายรูป)</button>
       </div>
+    </div>
+    <div id="manualCard" class="card hidden">
+      <h2>✍️ กรอกวันหมดอายุเอง</h2>
+      <label>ชื่อสินค้า</label><input id="m-name" placeholder="เช่น นมกล่อง 200 มล." maxlength="200">
+      <label>วันหมดอายุ (EXP) *</label><input id="m-exp" type="date">
+      <label>วันผลิต (MFG)</label><input id="m-mfg" type="date">
+      <label>Lot Number</label><input id="m-lot" placeholder="เช่น A2506B" autocapitalize="characters">
+      <label>ชื่อผู้บันทึก *</label><input id="m-user" placeholder="เช่น qa_somchai">
+      <div class="row" style="margin-top:14px"><button class="btn secondary" id="m-cancel">ยกเลิก</button><button class="btn" id="m-save">บันทึก</button></div>
     </div>
     <div id="quality" class="card hidden"></div>
     <div id="result"></div>
@@ -353,7 +363,37 @@ $("#sampleBtn").onclick = async () => {
     $("#quality").classList.remove("hidden"); upload(blob, name);
   } catch (e) { toast("โหลดภาพตัวอย่างไม่ได้"); }
 };
-$("#fileInput").onchange = (e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
+// ---------- กรอกเอง (ไม่มีภาพ / ไม่ผ่าน OCR)
+$("#manualBtn").onclick = () => {
+  $("#manualCard").classList.remove("hidden"); $("#m-user").value = $("#m-user").value || reviewerName();
+  $("#manualCard").scrollIntoView({ behavior: "smooth", block: "start" }); $("#m-exp").focus();
+};
+$("#m-cancel").onclick = () => $("#manualCard").classList.add("hidden");
+$("#m-save").onclick = () => saveManual(false);
+async function saveManual(force) {
+  const user = $("#m-user").value.trim(), exp = $("#m-exp").value;
+  if (!exp) return toast("กรุณาใส่วันหมดอายุ");
+  if (!user) return toast("กรุณาใส่ชื่อผู้บันทึก");
+  saveReviewer(user);
+  const body = { user, exp_date: exp, mfg_date: $("#m-mfg").value || null, lot_number: $("#m-lot").value.trim() || null,
+    product_name: $("#m-name").value.trim() || null, force };
+  const r = await fetch(API + "/documents/manual", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const res = await r.json();
+  if (r.status === 422 && res.detail?.details?.length) {
+    const msg = res.detail.details.map((d) => "• " + d.message).join("\n");
+    if (confirm("ค่ายังไม่ผ่านกฎธุรกิจ:\n" + msg + "\n\nยืนยันบันทึกค่านี้หรือไม่?")) return saveManual(true);
+    return;
+  }
+  if (!r.ok) return toast(res.detail?.message || (typeof res.detail === "string" ? res.detail : "บันทึกไม่สำเร็จ"));
+  ["#m-name", "#m-exp", "#m-mfg", "#m-lot"].forEach((s) => ($(s).value = ""));
+  $("#manualCard").classList.add("hidden"); toast("บันทึกแล้ว ✓");
+  renderResult(res, $("#result")); refreshCount();
+  $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+const NOIMG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#2a2f3a"/><text x="28" y="37" font-size="26" text-anchor="middle">✍️</text></svg>');
+function thumb(id) { return `<img loading="lazy" src="${API}/documents/${id}/image?variant=original" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
+
+$("#fileInput").onchange =(e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
 
 // ---------- ตรวจคุณภาพภาพบนมือถือก่อนส่ง (ความคมชัด) + ย่อขนาดเพื่อส่งเร็ว
 async function loadBitmap(blob) {
@@ -421,7 +461,7 @@ function confColor(c) { return c >= THRESHOLD ? "var(--ok)" : c >= 0.7 ? "var(--
 
 function renderResult(doc, el) {
   const [st, cls] = STATUS_TH[doc.status] || [doc.status, "b-warn"];
-  const pending = doc.status === "PENDING_REVIEW";
+  const pending = doc.status === "PENDING_REVIEW", manual = doc.engine === "manual";
   const names = ["exp_date", "mfg_date", "lot_number"];
   const fieldsHtml = names.map((n) => {
     const f = doc.fields[n]; const val = f ? (f.value ?? f.predicted_value) : null; const c = f ? f.confidence : 0;
@@ -440,8 +480,9 @@ function renderResult(doc, el) {
   const warns = (doc.rules || []).filter((r) => !r.passed && r.severity === "warning").map((r) => `<li>${esc(r.message)}</li>`).join("");
   el.innerHTML = `<div class="card">
       <div class="row" style="align-items:center;margin-bottom:12px"><div><span class="badge ${cls}">${st}</span></div>
-      <div class="muted" style="text-align:right">#${doc.document_id} · ${(doc.processing_ms / 1000).toFixed(1)} วิ</div></div>
-      <img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">
+      <div class="muted" style="text-align:right">#${doc.document_id} · ${manual ? "กรอกเอง" : (doc.processing_ms / 1000).toFixed(1) + " วิ"}</div></div>
+      ${manual ? `<div class="val" style="margin-bottom:10px">✍️ ${esc(doc.filename)}</div>`
+        : `<img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">`}
       ${expiryBanner(doc.expiry)}
       ${reasons ? `<div class="notice"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
       ${warns ? `<div class="notice bad"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
@@ -503,7 +544,7 @@ function expiryBanner(e) {
 }
 function docRow(a, right = "") {
   const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
-  return `<div class="list-item" data-id="${a.document_id}"><img loading="lazy" src="${API}/documents/${a.document_id}/image?variant=original" alt="">
+  return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id)}
     <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
     <div class="muted">Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
     <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
@@ -599,9 +640,9 @@ function itemHtml(d) {
   const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
   const v = exp ? (exp.value ?? exp.predicted_value) : null;
   return `<div class="list-item" data-id="${d.document_id}">
-    <img loading="lazy" src="${API}/documents/${d.document_id}/image?variant=original" alt="">
+    ${thumb(d.document_id)}
     <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
-    <div class="muted">#${d.document_id} · มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%</div></div>
+    <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div></div>
     <span class="badge ${cls}">${st}</span></div>`;
 }
 async function openDoc(id) {

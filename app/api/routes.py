@@ -23,7 +23,7 @@ from app.models import DocumentStatus
 from app.pipeline import ExpiryOCRPipeline
 from app.review import service
 from app.review.service import FieldCorrection
-from app.schemas import AckIn, RejectIn, ReviewIn
+from app.schemas import AckIn, ManualEntryIn, RejectIn, ReviewIn
 
 router = APIRouter(prefix="/api/v1")
 MAX_UPLOAD = 15 * 1024 * 1024
@@ -53,6 +53,13 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     return document_json(doc)
 
 
+@router.post("/documents/manual", summary="กรอกวันหมดอายุเอง (ไม่ต้องมีภาพ) -> อนุมัติทันที")
+def create_manual_document(body: ManualEntryIn, db: Session = Depends(get_session)):
+    values = {"exp_date": body.exp_date, "mfg_date": body.mfg_date, "lot_number": body.lot_number}
+    doc = service.create_manual(db, body.user, values, body.product_name, body.force)
+    return document_json(doc)
+
+
 @router.get("/documents")
 def list_documents(status: DocumentStatus | None = None, limit: int = Query(100, le=500), offset: int = 0,
                    db: Session = Depends(get_session)):
@@ -68,6 +75,8 @@ def get_document(doc_id: int, db: Session = Depends(get_session)):
 def get_image(doc_id: int, variant: str = Query("annotated", pattern="^(original|processed|annotated)$"),
               db: Session = Depends(get_session)):
     doc = service.get_document(db, doc_id)
+    if not doc.original_path:   # รายการที่กรอกเอง ไม่มีภาพ
+        raise HTTPException(404, "รายการนี้กรอกเอง ไม่มีภาพ")
     if variant == "processed" and doc.processed_path:
         return Response(Path(doc.processed_path).read_bytes(), media_type="image/png")
     img = cv2.imread(doc.original_path)
