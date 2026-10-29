@@ -10,20 +10,34 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Expiry Date AI OCR</title>
 <style>
+  /* สีหลัก (เลือกได้จากปุ่ม 🎨): a1 เข้ม, a2 เข้มกว่า, a3 เข้มสุด, al สว่าง (ใช้ในโหมดมืด) */
+  :root, [data-accent="teal"] { --a1: #0d9488; --a2: #0f766e; --a3: #115e59; --al: #2dd4bf; }
+  [data-accent="blue"]   { --a1: #2563eb; --a2: #1d4ed8; --a3: #1e3a8a; --al: #60a5fa; }
+  [data-accent="purple"] { --a1: #7c3aed; --a2: #6d28d9; --a3: #4c1d95; --al: #a78bfa; }
+  [data-accent="pink"]   { --a1: #db2777; --a2: #be185d; --a3: #831843; --al: #f472b6; }
+  [data-accent="orange"] { --a1: #ea580c; --a2: #c2410c; --a3: #7c2d12; --al: #fb923c; }
+  [data-accent="green"]  { --a1: #16a34a; --a2: #15803d; --a3: #14532d; --al: #4ade80; }
   :root {
     --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #cbd5e1;
-    --brand: #0d9488; --brand-2: #0f766e; --brand-soft: #ccfbf1; --brand-ink: #ffffff;
+    --brand: var(--a1); --brand-2: var(--a2); --brand-soft: color-mix(in srgb, var(--a1) 16%, #fff); --brand-ink: #ffffff;
     --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --bad: #dc2626; --bad-bg: #fee2e2;
     --input: #ffffff; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
-    --hero: linear-gradient(135deg, #0d9488 0%, #0f766e 55%, #115e59 100%);
+    --hero: linear-gradient(135deg, var(--a1) 0%, var(--a2) 55%, var(--a3) 100%);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
-      --brand: #2dd4bf; --brand-2: #14b8a6; --brand-soft: #0d3b38; --brand-ink: #032421;
+    :root:not([data-theme="light"]) { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
+      --brand: var(--al); --brand-2: var(--a1); --brand-soft: color-mix(in srgb, var(--al) 20%, #121a2a);
+      --brand-ink: color-mix(in srgb, var(--a3) 45%, #000);
       --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
       --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
-      --hero: linear-gradient(135deg, #115e59 0%, #134e4a 60%, #0f2f2d 100%); }
+      --hero: linear-gradient(135deg, var(--a3) 0%, color-mix(in srgb, var(--a3) 75%, #000) 60%, color-mix(in srgb, var(--a3) 45%, #000) 100%); }
   }
+  :root[data-theme="dark"] { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
+    --brand: var(--al); --brand-2: var(--a1); --brand-soft: color-mix(in srgb, var(--al) 20%, #121a2a);
+    --brand-ink: color-mix(in srgb, var(--a3) 45%, #000);
+    --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
+    --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    --hero: linear-gradient(135deg, var(--a3) 0%, color-mix(in srgb, var(--a3) 75%, #000) 60%, color-mix(in srgb, var(--a3) 45%, #000) 100%); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font: 16px/1.55 "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -31,13 +45,23 @@
   svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 
   /* ---------- header */
-  header { background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; }
+  header { position: relative; background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; }
   .hwrap { max-width: 720px; margin: 0 auto; }
   .brandrow { display: flex; align-items: center; gap: 12px; }
   .logo { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.16); display: grid; place-items: center; }
   .brandrow h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
   .brandrow .sub { font-size: 12.5px; opacity: .85; }
   .chip-h { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+  button.chip-h { border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 13px; padding: 6px 12px; }
+  .theme-panel { position: absolute; right: 16px; top: calc(60px + env(safe-area-inset-top)); z-index: 30; width: 260px;
+    background: var(--card); color: var(--text); border: 1.5px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+  .theme-panel .t { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .seg button { border: 1.5px solid var(--line); background: var(--card-2); border-radius: 10px; padding: 6px 0; font-size: 13.5px; }
+  .seg button.on { border-color: var(--brand); background: var(--brand-soft); font-weight: 600; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; outline: 1.5px solid var(--line); }
+  .swatches button.on { border-color: var(--card); outline: 2.5px solid var(--text); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 10px 12px; }
   .stat b { display: block; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -189,7 +213,14 @@
     <div class="brandrow">
       <div class="logo"><svg class="i"><use href="#i-box"/></svg></div>
       <div><h1>AI OCR วันหมดอายุ</h1><div class="sub">สแกน · ตรวจ · แจ้งเตือน</div></div>
-      <span class="chip-h" id="health">กำลังเชื่อมต่อ…</span>
+      <button class="chip-h" id="themeBtn" aria-label="เปลี่ยนธีม">🎨 ธีม</button>
+    </div>
+    <div class="theme-panel hidden" id="themePanel">
+      <div class="t">โหมด</div>
+      <div class="seg" id="modeSeg"><button data-mode="auto">อัตโนมัติ</button><button data-mode="light">☀️ สว่าง</button><button data-mode="dark">🌙 มืด</button></div>
+      <div class="t">สีธีม</div>
+      <div class="swatches" id="accentSw"></div>
+      <div class="muted" style="font-size:12.5px">เครื่องอ่าน: <span id="health">กำลังเชื่อมต่อ…</span></div>
     </div>
     <div class="stats">
       <div class="stat"><b id="s-total">–</b><span>สแกนทั้งหมด</span></div>
@@ -324,6 +355,26 @@ function iso(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 function thaiDate(s) { if (!s) return "-"; const [y, m, d] = s.split("-").map(Number); return `${d} ${MONTH_S[m - 1]} ${y + 543}`; }
 function empty(e, text) { return `<div class="empty"><span class="e">${e}</span>${text}</div>`; }
 const loading = (t) => `<div class="loading"><div class="spinner"></div><div>${t}</div></div>`;
+
+// ---------- ธีม (โหมดมืด/สว่าง + สีหลัก) จำไว้ในเครื่อง
+const ACCENTS = { teal: "#0d9488", blue: "#2563eb", purple: "#7c3aed", pink: "#db2777", orange: "#ea580c", green: "#16a34a" };
+function pref(k, d) { try { return localStorage.getItem(k) || d; } catch { return d; } }
+function setPref(k, v) { try { localStorage.setItem(k, v); } catch {} }
+function applyTheme() {
+  const mode = pref("theme", "auto"), accent = pref("accent", "teal"), root = document.documentElement;
+  if (mode === "auto") root.removeAttribute("data-theme"); else root.dataset.theme = mode;
+  root.dataset.accent = ACCENTS[accent] ? accent : "teal";
+  document.querySelector('meta[name="theme-color"]').content = ACCENTS[accent] || ACCENTS.teal;
+  $("#modeSeg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+  $("#accentSw").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.accent === accent));
+}
+$("#accentSw").innerHTML = Object.entries(ACCENTS).map(([k, c]) => `<button data-accent="${k}" style="background:${c}" aria-label="${k}"></button>`).join("");
+$("#modeSeg").querySelectorAll("button").forEach((b) => b.onclick = () => { setPref("theme", b.dataset.mode); applyTheme(); });
+$("#accentSw").querySelectorAll("button").forEach((b) => b.onclick = () => { setPref("accent", b.dataset.accent); applyTheme(); });
+$("#themeBtn").onclick = (e) => { e.stopPropagation(); $("#themePanel").classList.toggle("hidden"); };
+$("#themePanel").onclick = (e) => e.stopPropagation();
+document.addEventListener("click", () => $("#themePanel").classList.add("hidden"));
+applyTheme();
 
 // ---------- tabs
 document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
