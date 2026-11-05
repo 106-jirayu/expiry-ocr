@@ -1,0 +1,36 @@
+{"image": "images/real_001.jpg", "ground_truth": {"exp_date": "2021-02-26", "mfg_date": null, "lot_number": null, "exp_text": "FEB/26/21", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_002.jpg", "ground_truth": {"exp_date": "2021-09-19", "mfg_date": "2020-09-19", "lot_number": null, "exp_text": "19 09 2021", "mfg_text": "19 09 2020", "lot_text": null}}
+{"image": "images/real_003.jpg", "ground_truth": {"exp_date": "2021-08-08", "mfg_date": null, "lot_number": null, "exp_text": "2021 08 08", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_004.jpg", "ground_truth": {"exp_date": "2022-02-15", "mfg_date": null, "lot_number": null, "exp_text": "15FEB22", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_005.jpg", "ground_truth": {"exp_date": "2021-12-28", "mfg_date": null, "lot_number": "0C184296", "exp_text": "DEC-28-2021", "mfg_text": null, "lot_text": "0C184296"}}
+{"image": "images/real_006.jpg", "ground_truth": {"exp_date": "2021-03-04", "mfg_date": null, "lot_number": null, "exp_text": "MAR 04 2021", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_007.jpg", "ground_truth": {"exp_date": "2021-11-11", "mfg_date": "2020-08-11", "lot_number": null, "exp_text": "11/11/2021", "mfg_text": "11/08/2020", "lot_text": null}}
+{"image": "images/real_008.jpg", "ground_truth": {"exp_date": "2022-05-04", "mfg_date": null, "lot_number": null, "exp_text": "2022.05.04", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_009.jpg", "ground_truth": {"exp_date": "2022-05-31", "mfg_date": null, "lot_number": null, "exp_text": "May 2022", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_010.jpg", "ground_truth": {"exp_date": "2021-07-09", "mfg_date": null, "lot_number": null, "exp_text": "2021.07.09", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_011.jpg", "ground_truth": {"exp_date": "2022-01-12", "mfg_date": "2021-01-13", "lot_number": null, "exp_text": "22.01.12", "mfg_text": "21.01.13", "lot_text": null}}
+{"image": "images/real_012.jpg", "ground_truth": {"exp_date": "2021-06-25", "mfg_date": "2021-01-26", "lot_number": null, "exp_text": "21.06.25", "mfg_text": "21.01.26", "lot_text": null}}
+{"image": "images/real_013.jpg", "ground_truth": {"exp_date": "2021-03-03", "mfg_date": null, "lot_number": "651", "exp_text": "03/03/21", "mfg_text": null, "lot_text": "651"}}
+{"image": "images/real_014.jpg", "ground_truth": {"exp_date": "2022-09-04", "mfg_date": null, "lot_number": null, "exp_text": "2022.09.04", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_015.jpg", "ground_truth": {"exp_date": "2023-09-01", "mfg_date": null, "lot_number": null, "exp_text": "01 SEP 2023", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_016.jpg", "ground_truth": {"exp_date": "2022-04-14", "mfg_date": null, "lot_number": null, "exp_text": "APR 14 2022", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_017.jpg", "ground_truth": {"exp_date": "2021-07-03", "mfg_date": null, "lot_number": null, "exp_text": "2021. 07. 03", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_018.jpg", "ground_truth": {"exp_date": "2021-03-09", "mfg_date": null, "lot_number": null, "exp_text": "2021.03.09", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_019.jpg", "ground_truth": {"exp_date": "2022-06-30", "mfg_date": null, "lot_number": null, "exp_text": "JUN 2022", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_020.jpg", "ground_truth": {"exp_date": "2021-09-07", "mfg_date": null, "lot_number": null, "exp_text": "2021.09.07", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_021.jpg", "ground_truth": {"exp_date": "2021-04-18", "mfg_date": null, "lot_number": null, "exp_text": "18/04/2021", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_022.jpg", "ground_truth": {"exp_date": "2021-12-25", "mfg_date": null, "lot_number": null, "exp_text": "2021.12.25", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_023.jpg", "ground_truth": {"exp_date": "2022-02-04", "mfg_date": null, "lot_number": null, "exp_text": "2022.02.04", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_024.jpg", "ground_truth": {"exp_date": "2021-04-28", "mfg_date": null, "lot_number": null, "exp_text": "28.04.2021", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_025.jpg", "ground_truth": {"exp_date": "2021-07-10", "mfg_date": null, "lot_number": null, "exp_text": "2021.07.10", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_026.jpg", "ground_truth": {"exp_date": "2021-11-30", "mfg_date": null, "lot_number": null, "exp_text": "2021 11 30", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_027.jpg", "ground_truth": {"exp_date": "2021-09-30", "mfg_date": null, "lot_number": null, "exp_text": "2021.09.30", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_028.jpg", "ground_truth": {"exp_date": "2021-08-13", "mfg_date": null, "lot_number": null, "exp_text": "13/08/2021", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_029.jpg", "ground_truth": {"exp_date": "2020-08-29", "mfg_date": null, "lot_number": null, "exp_text": "AUG292020", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_030.jpg", "ground_truth": {"exp_date": "2021-03-11", "mfg_date": "2019-03-11", "lot_number": null, "exp_text": "11.03.2021", "mfg_text": "11.03.2019", "lot_text": null}}
+{"image": "images/real_031.jpg", "ground_truth": {"exp_date": "2021-07-05", "mfg_date": null, "lot_number": null, "exp_text": "2021-07-05", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_032.jpg", "ground_truth": {"exp_date": "2021-08-03", "mfg_date": null, "lot_number": null, "exp_text": "2021.08.03", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_033.jpg", "ground_truth": {"exp_date": "2021-02-21", "mfg_date": null, "lot_number": null, "exp_text": "FEB/21/21", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_034.jpg", "ground_truth": {"exp_date": "2021-04-11", "mfg_date": null, "lot_number": null, "exp_text": "11 APR 2021", "mfg_text": null, "lot_text": null}}
+{"image": "images/real_035.jpg", "ground_truth": {"exp_date": "2022-01-31", "mfg_date": "2021-02-01", "lot_number": null, "exp_text": "2022.01.31", "mfg_text": "2021.02.01", "lot_text": null}}
+{"image": "images/real_036.jpg", "ground_truth": {"exp_date": "2021-11-26", "mfg_date": "2020-11-26", "lot_number": null, "exp_text": "26/11/2021", "mfg_text": "26/11/2020", "lot_text": null}}
