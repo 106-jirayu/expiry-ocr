@@ -173,6 +173,12 @@ def test_lotion_is_not_lot_label():
     assert "lot_number" not in f
 
 
+@pytest.mark.parametrize("line,lot", [("LOT N09413G", "N09413G"), ("LOT NO 9413G", "9413G"), ("LOT NO.9413G", "9413G")])
+def test_lot_starting_with_n0_keeps_its_prefix(line, lot):
+    f, _, _ = run([line])
+    assert f["lot_number"].value == lot
+
+
 @pytest.mark.parametrize("text", ["LOT NUMBER: A2506B", "BATCH NO. A2506B"])
 def test_lot_label_words_are_not_the_value(text):
     f, _, _ = run([text])
