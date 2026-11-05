@@ -252,7 +252,7 @@
         <button class="btn" id="openCam" style="margin-top:12px"><svg class="i"><use href="#i-cam"/></svg>เปิดกล้องถ่ายวันหมดอายุ</button>
         <div class="grid2" style="margin-top:10px">
           <label class="btn secondary" style="margin:0;color:var(--text);font-size:15px"><svg class="i"><use href="#i-img"/></svg>เลือกรูป
-            <input id="fileInput" type="file" accept="image/*" capture="environment" class="hidden">
+            <input id="fileInput" type="file" accept="image/*" class="hidden">
           </label>
           <button class="btn secondary" id="sampleBtn" style="font-size:15px"><svg class="i"><use href="#i-flask"/></svg>ภาพตัวอย่าง</button>
         </div>
@@ -382,9 +382,10 @@ document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => sh
 function showTab(name) {
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   TABS.forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
-  if (name === "queue") loadQueue();
-  if (name === "history") loadHistory();
-  if (name === "alerts") loadAlerts();
+  const offline = (id) => () => { $(id).innerHTML = empty("📡", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); };
+  if (name === "queue") loadQueue().catch(offline("#queueList"));
+  if (name === "history") loadHistory().catch(offline("#historyList"));
+  if (name === "alerts") loadAlerts().catch(offline("#alertList"));
   if (name === "calendar") loadCalendar();
   window.scrollTo({ top: 0 });
 }
@@ -432,8 +433,13 @@ async function saveManual(force) {
   saveReviewer(user);
   const body = { user, exp_date: exp, mfg_date: $("#m-mfg").value || null, lot_number: $("#m-lot").value.trim() || null,
     product_name: $("#m-name").value.trim() || null, force };
-  const r = await fetch(API + "/documents/manual", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  const res = await r.json();
+  const btn = $("#m-save"); if (btn.disabled) return; btn.disabled = true;   // กันกดซ้ำแล้วได้รายการซ้ำ
+  let r, res;
+  try {
+    r = await fetch(API + "/documents/manual", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    res = await r.json();
+  } catch { return toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); }
+  finally { btn.disabled = false; }
   if (r.status === 422 && res.detail?.details?.length) {
     const msg = res.detail.details.map((d) => "• " + d.message).join("\n");
     if (confirm("ค่ายังไม่ผ่านกฎธุรกิจ:\n" + msg + "\n\nยืนยันบันทึกค่านี้หรือไม่?")) return saveManual(true);
@@ -482,7 +488,9 @@ async function prepare(blob) {
 
 async function handleImage(blob, name) {
   const q = $("#quality"); q.classList.remove("hidden"); q.innerHTML = loading("กำลังตรวจคุณภาพภาพ…");
-  const p = await prepare(blob);
+  let p;
+  // เบราว์เซอร์เปิดบางไฟล์ไม่ได้ (เช่น HEIC) ก็ยังส่งให้เซิร์ฟเวอร์ลองอ่านได้
+  try { p = await prepare(blob); } catch { return upload(blob, name); }
   if (p.sharp < 60) {
     q.innerHTML = `<div class="notice" style="margin:0"><b>⚠️ ภาพอาจเบลอ (ความคม ${p.sharp.toFixed(0)})</b>ภาพเบลอทำให้อ่านผิดได้ แนะนำให้ถ่ายใหม่ให้ชัดขึ้น</div>
       <div class="row" style="margin-top:12px"><button class="btn secondary" id="retake">ถ่ายใหม่</button><button class="btn" id="sendAnyway">ส่งต่อเลย</button></div>`;
@@ -581,7 +589,8 @@ async function rejectDoc(doc, el) {
   if (!reason) return;
   const r = await fetch(`${API}/review/${doc.document_id}/reject`, { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ reviewer, reason }) });
-  if (r.ok) { renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+  if (r.ok) { saveReviewer(reviewer); renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+  else toast("ปฏิเสธไม่สำเร็จ");
 }
 
 // ---------- สถานะวันหมดอายุ
@@ -601,7 +610,7 @@ function docRow(a, right = "") {
   const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
   return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id)}
     <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
-    <div class="muted">Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
+    <div class="muted">${a.engine === "manual" ? esc(a.filename) + " · " : ""}Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
     <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
 }
 
@@ -721,7 +730,9 @@ function itemHtml(d) {
     <span class="badge ${cls}">${st}</span></div>`;
 }
 async function openDoc(id) {
-  const d = await (await fetch(`${API}/documents/${id}`)).json(); showTab("scan"); renderResult(d, $("#result"));
+  const r = await fetch(`${API}/documents/${id}`).catch(() => null);
+  if (!r?.ok) return toast("เปิดรายการนี้ไม่ได้");
+  const d = await r.json(); showTab("scan"); renderResult(d, $("#result"));
   $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function bindItems(container) { container.querySelectorAll(".list-item").forEach((x) => x.onclick = () => openDoc(x.dataset.id)); }

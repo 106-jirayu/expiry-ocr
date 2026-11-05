@@ -28,6 +28,11 @@ TH_MONTHS = {
     "มกราคม": 1, "กุมภาพันธ์": 2, "มีนาคม": 3, "เมษายน": 4, "พฤษภาคม": 5, "มิถุนายน": 6,
     "กรกฎาคม": 7, "สิงหาคม": 8, "กันยายน": 9, "ตุลาคม": 10, "พฤศจิกายน": 11, "ธันวาคม": 12,
 }
+# OCR มักอ่านจุดหาย: "ธ.ค", "ธค"
+for _k, _v in list(TH_MONTHS.items()):
+    if "." in _k:
+        TH_MONTHS[_k.rstrip(".")] = _v
+        TH_MONTHS[_k.replace(".", "")] = _v
 _EN = "|".join(sorted(EN_MONTHS, key=len, reverse=True))
 _TH = "|".join(re.escape(m) for m in sorted(TH_MONTHS, key=len, reverse=True))
 MON = rf"(?P<mon>{_EN}|{_TH})"

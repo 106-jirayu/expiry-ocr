@@ -21,15 +21,20 @@ FIELDS = ("exp_date", "mfg_date", "lot_number")
 
 LABELS = {
     "exp_date": re.compile(
-        r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]F[O0]RE(\s*END)?|U[S5]E\s*[B8]Y|EXP(IRY|IRES|IRE)?(\s*DATE)?|EXD|(?<![A-Z0-9])(BBE?(?![A-Z])|[B8]{2}E?(?![A-Z0-9]))|"
-        r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรใช้ก่อน)\s*[:.\-]?",
+        r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]F[O0]RE(\s*END)?|[B8][E3][S5]T\s*(IF\s*USED\s*)?[B8]Y|"
+        r"U[S5]E\s*([B8]Y|[B8][E3]F[O0]RE)|"
+        r"EXP(IRY|IRES|IRE|IRATION|IRED)?([.\s]*DATE)?(?![A-Z])|EXD(?![A-Z])|EX(?=\s*[:.]?\s*\d)|"  # ไม่รวม EXPORT, EXPRESS
+        r"(?<![A-Z0-9])(BB[ED]?(?![A-Z])|[B8]{2}E?(?![A-Z0-9]))|"
+        r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรบริโภคภายใน|ควรใช้ก่อน|ใช้ก่อน)\s*[:.\-]?",
         re.I),
     "mfg_date": re.compile(
-        r"(?<![A-Z])(MFG|M[EI]?F\s?[G6D0O]|M[EI][G6]|MANUFACTURED(\s*DATE)?|MFD|PR[O0]D(UCTI[O0]N)?(\s*DATE)?(?![A-Z])|PKD|"
-        r"วันผลิต|ผลิต|ผลิตเมื่อ)\s*[:.\-]?",
+        r"(?<![A-Z])((MFG|M[EI]?F\s?[G6D0O]|M[EI][G6]|MANUFACTURED?(?!\s*BY)|MFD|PR[O0]D(UCTI[O0]N)?|PKD|PACKED(\s*ON)?)"
+        r"([.\s]*DATE)?(?![A-Z])|"  # ไม่รวม MEGA, PRODUCT, MANUFACTURED BY
+        r"วันผลิต|(?<!ผู้)(?<!สถานที่)ผลิต(?!โดย|ภัณฑ์|จาก|ใน|และ|เพื่อ|ที่))\s*[:.\-]?",  # ไม่รวม ผลิตภัณฑ์, ผลิตโดย, ผู้ผลิต
         re.I),
     "lot_number": re.compile(
-        r"(?<![A-Z])(L[O0]T\s*(N[O0]\.?)?|[B8]ATCH(\s*N[O0]\.?)?|ล็อต|ล๊อต|รุ่นการผลิต|L(?=\s*[:.#]))\s*[:.#]?\s*",
+        r"(?<![A-Z])(L[O0]T(\s*(N[O0]\.?|NUMBER|NUM\.?))?(?![A-Z])|[B8]ATCH(\s*(N[O0]\.?|NUMBER|NUM\.?))?(?![A-Z])|"  # ไม่รวม LOTION
+        r"ล็อต|ล๊อต|รุ่นการผลิต|L(?=\s*[:.#]))\s*[:.#]?\s*",
         re.I),
 }
 LOT_VALUE = re.compile(r"[A-Z0-9][A-Z0-9\-/]{2,19}")
@@ -77,6 +82,7 @@ def fix_digits(segment: str) -> tuple[str, int]:
         segment = segment.replace(wrong, right)
     chars = list(segment)
     month_spans = [m.span() for m in re.finditer(
+        r"JANUARY|FEBRUARY|MARCH|APRIL|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER|"
         r"JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEPT?|OCT|NOV|DEC", segment, re.I)]
 
     def in_month(i):
@@ -157,13 +163,15 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
         hits = _label_hits(upper)
         bounds = [h[0] for h in hits[1:]] + [len(upper)]
         covered_until = 0
+        pending = None   # label รวม เช่น "MFG/EXP: 01/01/26 01/01/27" -> label แรกรอรับวันที่ตัวแรกของ label ถัดไป
         for (s, e, fname, label), seg_end in zip(hits, bounds):
             if fname in found and found[fname].value is not None:
                 continue   # ใช้ค่าแรกที่อ่านได้ (label ที่อ่านค่าไม่ได้ ยอมให้ label ถัดไปแทนที่)
             seg = upper[e:seg_end]
             if fname == "lot_number":
                 m = LOT_VALUE.search(seg)
-                if m and not find_dates(seg[m.start():m.end()], today):
+                # รหัสตัวเลขติดกันเป็น Lot ได้ (เช่น LOT 120626) ยกเว้นที่มีตัวคั่นซึ่งเป็นวันที่ชัดเจน
+                if m and not any(re.search(r"[/\-]", d.raw) for d in find_dates(m.group(0), today)):
                     vs, ve = e + m.start(), e + m.end()
                     confs = _span_conf(line, vs, ve)
                     found[fname] = FieldPrediction(
@@ -174,8 +182,17 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
                 else:
                     found[fname] = _unreadable(fname, line, idx, e, seg_end, label)
                 continue
+            if pending is None and seg_end < len(upper) and not seg.strip(" /\\|,&:.-"):
+                pending = (fname, label, e, seg_end)
+                continue
             fixed, fixes = fix_digits(seg)
             dates = find_dates(fixed, today)
+            if pending and len(dates) >= 2:
+                p_name, p_label, _, _ = pending
+                pd = dates.pop(0)
+                seg_fixes = sum(1 for a, b in zip(seg[pd.start:pd.end], fixed[pd.start:pd.end]) if a != b)
+                found[p_name] = _date_prediction(p_name, line, idx, e, pd, seg_fixes, p_label, False)
+                pending = None
             if dates:
                 pd = dates[0]
                 seg_fixes = sum(1 for a, b in zip(seg[pd.start:pd.end], fixed[pd.start:pd.end]) if a != b)
@@ -184,6 +201,9 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
                 covered_until = max(covered_until, e + pd.end)
             else:
                 found[fname] = _unreadable(fname, line, idx, e, seg_end, label)
+        if pending:
+            p_name, p_label, p_start, p_end = pending
+            found[p_name] = _unreadable(p_name, line, idx, p_start, p_end, p_label)
         # วันที่ที่ไม่มี label กำกับ
         if not hits:
             fixed, _ = fix_digits(upper)
@@ -213,7 +233,9 @@ def unclaimed_dates(lines: list[TextLine], fields: dict[str, FieldPrediction],
                     today: date | None = None) -> list[str]:
     """วันที่ที่พบในภาพแต่ไม่ได้ถูกจัดเป็น EXP/MFG — อาจเป็นฟิลด์ที่ระบบหา label ไม่เจอ (ต้องให้คนดู)"""
     claimed = {f.value for f in fields.values() if f.value}
-    claimed_raw = {f.raw_text for f in fields.values() if f.raw_text}
+    claimed_raw = {fix_digits(f.raw_text.upper())[0] for f in fields.values() if f.raw_text and f.date_format}
+    lot = fields.get("lot_number")
+    lot_raw = fix_digits(lot.raw_text.upper())[0] if lot and lot.value and lot.raw_text else ""
     out = []
     for line in lines:
         fixed, _ = fix_digits(line.text.upper())
@@ -221,7 +243,7 @@ def unclaimed_dates(lines: list[TextLine], fields: dict[str, FieldPrediction],
             d = pd.to_date()
             if d is None or not 2000 <= d.year <= 2100 or d.isoformat() in claimed:
                 continue
-            if any(pd.raw in r or r in pd.raw for r in claimed_raw):
+            if any(pd.raw in r or r in pd.raw for r in claimed_raw) or pd.raw in lot_raw:
                 continue
             out.append(line.text[pd.start:pd.end])
     return out

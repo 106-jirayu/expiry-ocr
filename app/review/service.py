@@ -23,6 +23,7 @@ from app.recognition.detector import crop_polygon
 from app.rules.validators import validate
 
 REVIEWED = (DocumentStatus.HUMAN_APPROVED, DocumentStatus.HUMAN_CORRECTED, DocumentStatus.REJECTED)
+MANUAL_ENGINE = "manual"
 
 
 class ReviewError(Exception):
@@ -108,7 +109,7 @@ def create_manual(session: Session, user: str, values: dict[str, str | None], pr
     digest = hashlib.sha256(f"manual|{user}|{name}|{sorted(values.items())}|{now.isoformat()}".encode()).hexdigest()
     doc = Document(
         filename=name, sha256=digest, original_path="", processed_path=None,
-        status=DocumentStatus.HUMAN_APPROVED, overall_confidence=1.0, engine="manual",
+        status=DocumentStatus.HUMAN_APPROVED, overall_confidence=1.0, engine=MANUAL_ENGINE,
         route_reasons=[], rule_results=[r.to_dict() for r in rules], preprocessing={}, ocr_lines=[],
         processing_ms=0.0, reviewed_by=user, reviewed_at=now,
     )
@@ -271,7 +272,9 @@ def reject(session: Session, doc_id: int, reviewer: str, reason: str) -> Documen
 
 # ---------------------------------------------------------------- operational metrics
 def operational_metrics(session: Session) -> dict:
-    counts = dict(session.execute(select(Document.status, func.count()).group_by(Document.status)).all())
+    # รายการที่กรอกเองไม่ผ่าน OCR จึงไม่นับในตัวชี้วัดความแม่นยำ
+    scanned = Document.engine != MANUAL_ENGINE
+    counts = dict(session.execute(select(Document.status, func.count()).where(scanned).group_by(Document.status)).all())
     total = sum(counts.values())
     auto = counts.get(DocumentStatus.AUTO_APPROVED, 0)
     corrected = counts.get(DocumentStatus.HUMAN_CORRECTED, 0)
@@ -292,6 +295,7 @@ def operational_metrics(session: Session) -> dict:
         "human_correction_rate": round(corrected / (corrected + approved), 4) if corrected + approved else None,
         "field_correction_rate": round(error_fields / reviewed_fields, 4) if reviewed_fields else None,
         "per_field": per_field,
-        "avg_confidence": round(float(session.scalar(select(func.avg(Document.overall_confidence))) or 0), 4),
+        "avg_confidence": round(float(session.scalar(select(func.avg(Document.overall_confidence)).where(scanned)) or 0), 4),
+        "manual_entries": session.scalar(select(func.count()).select_from(Document).where(~scanned)) or 0,
     }
 

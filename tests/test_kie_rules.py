@@ -156,6 +156,69 @@ def test_label_value_on_next_line_is_inferred():
     assert not d.auto_approved
 
 
+@pytest.mark.parametrize("word", ["ผลิตภัณฑ์ของไทย", "ผลิตโดย บริษัท เอ จำกัด", "ผู้ผลิต บริษัท เอ", "MANUFACTURED BY ACME", "MEGA SALE"])
+def test_words_that_are_not_mfg_label(word):
+    f, _, _ = run([word, "EXP 31/12/2027"])
+    assert "mfg_date" not in f
+
+
+@pytest.mark.parametrize("word", ["EXPORT QUALITY", "EXPRESS DELIVERY"])
+def test_words_that_are_not_exp_label(word):
+    f, _, _ = run([word, "MFG 01/01/2026"])
+    assert "exp_date" not in f
+
+
+def test_lotion_is_not_lot_label():
+    f, _, _ = run(["BODY LOTION 100ML", "EXP 31/12/2027"])
+    assert "lot_number" not in f
+
+
+@pytest.mark.parametrize("text", ["LOT NUMBER: A2506B", "BATCH NO. A2506B"])
+def test_lot_label_words_are_not_the_value(text):
+    f, _, _ = run([text])
+    assert f["lot_number"].value == "A2506B"
+
+
+def test_numeric_lot_code_is_kept_and_not_an_unclaimed_date():
+    f, rules, _ = run(["MFG 01/01/2026", "EXP 01/01/2028", "LOT 120626"])
+    assert f["lot_number"].value == "120626"
+    assert not any(r.rule_id == "R10" and not r.passed for r in rules)
+
+
+@pytest.mark.parametrize("text,mfg,exp", [
+    ("MFG/EXP: 01/01/26 01/01/28", "2026-01-01", "2028-01-01"),
+    ("ผลิต/หมดอายุ 01/01/69 01/01/71", "2026-01-01", "2028-01-01"),
+])
+def test_combined_label_assigns_dates_in_order(text, mfg, exp):
+    f, _, _ = run([text])
+    assert f["mfg_date"].value == mfg and f["exp_date"].value == exp
+
+
+def test_combined_label_with_one_date_goes_to_review():
+    f, _, d = run(["MFG/EXP: 01/01/28"])
+    assert f["mfg_date"].value is None and not d.auto_approved
+
+
+@pytest.mark.parametrize("text,iso", [
+    ("EXPIRATION DATE 31/12/2027", "2027-12-31"),
+    ("BEST BY 31/12/2027", "2027-12-31"),
+    ("USE BEFORE 31/12/2027", "2027-12-31"),
+    ("EX: 31/12/2027", "2027-12-31"),
+    ("ควรบริโภคภายใน 31/12/2570", "2027-12-31"),
+    ("หมดอายุ 31 ธ.ค 70", "2027-12-31"),
+    ("หมดอายุ 31 ธค 70", "2027-12-31"),
+    ("EXP 31AUGUST2027", "2027-08-31"),
+])
+def test_more_exp_labels_and_formats(text, iso):
+    f, _, _ = run([text])
+    assert f["exp_date"].value == iso
+
+
+def test_lowercase_month_mfg_is_not_unclaimed():
+    _, rules, _ = run(["MFG Dec 2026", "EXP 01/01/2028"])
+    assert not any(r.rule_id == "R10" and not r.passed for r in rules)
+
+
 def test_unclaimed_date_routes_to_review():
     _, rules, d = run(["MFG 01/01/2026", "EXP 01/01/2028", "12/12/2027"])
     assert any(r.rule_id == "R10" and not r.passed for r in rules)
