@@ -76,7 +76,8 @@ def health():
 
 @app.get("/", include_in_schema=False)
 def mobile_page():
-    return FileResponse(WEB_DIR / "index.html")
+    # ให้เบราว์เซอร์ถามเซิร์ฟเวอร์ทุกครั้ง ไม่เช่นนั้นจะเห็นหน้าเก่าหลังอัปเดตแอป
+    return FileResponse(WEB_DIR / "index.html", headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/manifest.webmanifest", include_in_schema=False)

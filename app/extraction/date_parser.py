@@ -44,6 +44,9 @@ PATTERNS: list[tuple[str, re.Pattern]] = [
     ("DD MON YYYY", re.compile(rf"(?<!\d)(?P<d>\d{{1,2}}){SEP}?\s*{MON}\s*{SEP}?\s*(?P<y>\d{{4}}|\d{{2}})(?!\d)", re.I)),
     # ตัวคั่นทั้งสองตำแหน่งต้องเป็นตัวเดียวกัน (กันกรณี "EXP 1 16/07/28" ถูกอ่านเป็น 1/16/07)
     ("DD/MM/YYYY", re.compile(rf"(?<!\d)(?P<d>\d{{1,2}})(?P<s>{SEP})(?P<m>\d{{1,2}})(?P=s)(?P<y>\d{{4}})(?!\d)")),
+    # OCR ทำตัวคั่นหายไป 1 ตัว: "11.112025", "1111.2025"
+    ("DD/MM/YYYY", re.compile(r"(?<!\d)(?P<d>\d{1,2})[/.\-](?P<m>\d{2})(?P<y>(?:20|25)\d{2})(?!\d)")),
+    ("DD/MM/YYYY", re.compile(r"(?<!\d)(?P<d>\d{2})(?P<m>\d{2})[/.\-](?P<y>(?:20|25)\d{2})(?!\d)")),
     ("DD/MM/YY", re.compile(rf"(?<!\d)(?P<d>\d{{1,2}})(?P<s>{SEP})(?P<m>\d{{1,2}})(?P=s)(?P<y>\d{{2}})(?![\d/.\-])")),
     ("MON YYYY", re.compile(rf"(?<![A-Z]){MON}\s*{SEP}?\s*(?P<y>\d{{4}}|\d{{2}})(?!\d)", re.I)),
     ("MM/YYYY", re.compile(rf"(?<!\d)(?P<m>\d{{1,2}})[/.\-](?P<y>\d{{4}})(?!\d)")),

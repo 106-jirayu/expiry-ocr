@@ -59,7 +59,7 @@
   .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
   .seg button { border: 1.5px solid var(--line); background: var(--card-2); border-radius: 10px; padding: 6px 0; font-size: 13.5px; }
   .seg button.on { border-color: var(--brand); background: var(--brand-soft); font-weight: 600; }
-  .swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
   .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; outline: 1.5px solid var(--line); }
   .swatches button.on { border-color: var(--card); outline: 2.5px solid var(--text); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
@@ -160,9 +160,9 @@
   .cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .cal-head h2 { flex: 1; margin: 0; font-size: 18px; }
   .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-2); display: grid; place-items: center; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .cal-dow { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); padding: 2px 0 6px; }
-  .cal-day { aspect-ratio: 1 / 1.08; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 4px 2px; position: relative;
+  .cal-day { width: 100%; min-width: 0; min-height: 56px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 4px 2px; position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; font-variant-numeric: tabular-nums; }
   .cal-day .n { font-size: 14.5px; font-weight: 500; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; }
   .cal-day.out { background: transparent; border-style: dashed; opacity: .6; }
@@ -452,7 +452,7 @@ async function saveManual(force) {
   $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 const NOIMG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#2a2f3a"/><text x="28" y="37" font-size="26" text-anchor="middle">✍️</text></svg>');
-function thumb(id) { return `<img loading="lazy" src="${API}/documents/${id}/image?variant=original" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
+function thumb(id, manual) { return `<img loading="lazy" src="${manual ? NOIMG : `${API}/documents/${id}/image?variant=original`}" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
 
 $("#fileInput").onchange =(e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
 
@@ -533,10 +533,10 @@ function renderResult(doc, el) {
       ? `<input data-field="${n}" value="${esc(val || "")}" placeholder="เช่น A2506B" autocapitalize="characters">`
       : `<input data-field="${n}" type="date" value="${esc(val || "")}">`;
     return `<div class="field"><div class="top"><div class="name">${FIELD_TH[n]}</div>
-      ${f ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
-      <div class="val">${val ? esc(shown) : '<span class="muted">ไม่พบ</span>'}</div>
+      ${f && !manual ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
+      <div class="val">${val ? esc(shown) : `<span class="muted">${manual ? "ไม่ได้กรอก" : "ไม่พบ"}</span>`}</div>
       ${f && f.predicted_raw ? `<div class="muted">AI อ่านได้: “${esc(f.predicted_raw)}”</div>` : ""}
-      ${f ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
+      ${f && !manual ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
       ${pending ? `<label>แก้ไข (ถ้าค่าผิด)</label>${input}` : ""}</div>`;
   }).join("");
   const reasons = (doc.route_reasons || []).map((r) => `<li>${esc(reasonTh(r, doc.rules))}</li>`).join("");
@@ -608,7 +608,7 @@ function expiryBanner(e) {
 }
 function docRow(a, right = "") {
   const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
-  return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id)}
+  return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id, a.engine === "manual")}
     <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
     <div class="muted">${a.engine === "manual" ? esc(a.filename) + " · " : ""}Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
     <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
@@ -724,7 +724,7 @@ function itemHtml(d) {
   const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
   const v = exp ? (exp.value ?? exp.predicted_value) : null;
   return `<div class="list-item" data-id="${d.document_id}">
-    ${thumb(d.document_id)}
+    ${thumb(d.document_id, d.engine === "manual")}
     <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
     <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div></div>
     <span class="badge ${cls}">${st}</span></div>`;

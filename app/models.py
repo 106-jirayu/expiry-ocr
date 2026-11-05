@@ -123,6 +123,8 @@ class ExpiryAlert(Base):
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
+    document: Mapped[Document] = relationship(viewonly=True)
+
 
 class FeedbackSample(Base):
     __tablename__ = "feedback_samples"

@@ -118,6 +118,7 @@ def acknowledge(session: Session, alert_id: int, user: str) -> ExpiryAlert | Non
 
 def alert_json(a: ExpiryAlert) -> dict:
     return {"id": a.id, "document_id": a.document_id, "kind": a.kind.value, "title": TITLE[a.kind],
+            "filename": a.document.filename, "engine": a.document.engine,
             "exp_date": a.exp_date, "days_left": (date.fromisoformat(a.exp_date) - date.today()).days,
             "lot_number": a.lot_number, "message": a.message, "channels_sent": a.channels_sent,
             "acknowledged": a.acknowledged, "acknowledged_by": a.acknowledged_by,

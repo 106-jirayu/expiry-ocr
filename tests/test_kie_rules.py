@@ -214,6 +214,25 @@ def test_more_exp_labels_and_formats(text, iso):
     assert f["exp_date"].value == iso
 
 
+@pytest.mark.parametrize("line,name,value", [
+    ("LOTU34563H", "lot_number", "U34563H"),
+    ("BATCHA2506B", "lot_number", "A2506B"),
+    ("EXPDEC2027", "exp_date", "2027-12-31"),
+    ("EXP160CT2026", "exp_date", "2026-10-16"),
+    ("MFGJAN2026", "mfg_date", "2026-01-01"),
+    ("MFD 11.112025", "mfg_date", "2025-11-11"),
+    ("EXP 3112.2027", "exp_date", "2027-12-31"),
+])
+def test_ocr_that_drops_spaces_and_separators(line, name, value):
+    f, _, _ = run([line])
+    assert f[name].value == value
+
+
+def test_lotion_without_space_is_not_lot_label():
+    f, _, _ = run(["LOTION100ML", "EXP 31/12/2027"])
+    assert "lot_number" not in f
+
+
 def test_lowercase_month_mfg_is_not_unclaimed():
     _, rules, _ = run(["MFG Dec 2026", "EXP 01/01/2028"])
     assert not any(r.rule_id == "R10" and not r.passed for r in rules)

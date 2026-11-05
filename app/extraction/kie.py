@@ -19,21 +19,25 @@ from app.recognition.base import TextLine
 
 FIELDS = ("exp_date", "mfg_date", "lot_number")
 
+# RapidOCR มักตัดช่องว่างทิ้ง ("EXPDEC2027", "LOTU34563H") จึงยอมให้ชื่อเดือนหรือรหัสตามหลัง label ติดกันได้
+_NOT_WORD = r"(?!(?!JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z])"   # ตัวอักษรตามหลังต้องเป็นชื่อเดือน
+_LOT_END = r"(?![A-Z]+(?:[^A-Z0-9]|$))"                                       # ตัวอักษรล้วนตามหลัง = เป็นคำ ไม่ใช่รหัส
+
 LABELS = {
     "exp_date": re.compile(
         r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]F[O0]RE(\s*END)?|[B8][E3][S5]T\s*(IF\s*USED\s*)?[B8]Y|"
         r"U[S5]E\s*([B8]Y|[B8][E3]F[O0]RE)|"
-        r"EXP(IRY|IRES|IRE|IRATION|IRED)?([.\s]*DATE)?(?![A-Z])|EXD(?![A-Z])|EX(?=\s*[:.]?\s*\d)|"  # ไม่รวม EXPORT, EXPRESS
+        rf"EXP(IRY|IRES|IRE|IRATION|IRED)?([.\s]*DATE)?{_NOT_WORD}|EXD{_NOT_WORD}|EX(?=\s*[:.]?\s*\d)|"  # ไม่รวม EXPORT, EXPRESS
         r"(?<![A-Z0-9])(BB[ED]?(?![A-Z])|[B8]{2}E?(?![A-Z0-9]))|"
         r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรบริโภคภายใน|ควรใช้ก่อน|ใช้ก่อน)\s*[:.\-]?",
         re.I),
     "mfg_date": re.compile(
         r"(?<![A-Z])((MFG|M[EI]?F\s?[G6D0O]|M[EI][G6]|MANUFACTURED?(?!\s*BY)|MFD|PR[O0]D(UCTI[O0]N)?|PKD|PACKED(\s*ON)?)"
-        r"([.\s]*DATE)?(?![A-Z])|"  # ไม่รวม MEGA, PRODUCT, MANUFACTURED BY
+        rf"([.\s]*DATE)?{_NOT_WORD}|"  # ไม่รวม MEGA, PRODUCT, MANUFACTURED BY
         r"วันผลิต|(?<!ผู้)(?<!สถานที่)ผลิต(?!โดย|ภัณฑ์|จาก|ใน|และ|เพื่อ|ที่))\s*[:.\-]?",  # ไม่รวม ผลิตภัณฑ์, ผลิตโดย, ผู้ผลิต
         re.I),
     "lot_number": re.compile(
-        r"(?<![A-Z])(L[O0]T(\s*(N[O0]\.?|NUMBER|NUM\.?))?(?![A-Z])|[B8]ATCH(\s*(N[O0]\.?|NUMBER|NUM\.?))?(?![A-Z])|"  # ไม่รวม LOTION
+        rf"(?<![A-Z])(L[O0]T(?!ION)(\s*(N[O0]\.?|NUMBER|NUM\.?))?{_LOT_END}|[B8]ATCH(\s*(N[O0]\.?|NUMBER|NUM\.?))?{_LOT_END}|"  # ไม่รวม LOTION
         r"ล็อต|ล๊อต|รุ่นการผลิต|L(?=\s*[:.#]))\s*[:.#]?\s*",
         re.I),
 }
