@@ -228,6 +228,23 @@ def test_ocr_that_drops_spaces_and_separators(line, name, value):
     assert f[name].value == value
 
 
+@pytest.mark.parametrize("line,lot", [("101 W070K", "W070K"), ("[01: W7978A", "W7978A")])
+def test_misread_lot_label(line, lot):
+    f, _, _ = run([line])
+    assert f["lot_number"].value == lot
+
+
+@pytest.mark.parametrize("line", ["101 500", "ROOM 101 BANGKOK"])
+def test_number_101_is_not_a_lot_label(line):
+    f, _, _ = run([line])
+    assert "lot_number" not in f
+
+
+def test_date_with_lost_separator_before_year():
+    f, _, _ = run(["MFD 0710 2569"])
+    assert f["mfg_date"].value == "2026-10-07"
+
+
 def test_lotion_without_space_is_not_lot_label():
     f, _, _ = run(["LOTION100ML", "EXP 31/12/2027"])
     assert "lot_number" not in f
