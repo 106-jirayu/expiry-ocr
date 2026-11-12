@@ -3,48 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d9488">
+<meta name="theme-color" content="#0f9488">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<meta name="description" content="สแกนวันหมดอายุบนฉลากสินค้าด้วย AI ตรวจ แก้ และแจ้งเตือนก่อนหมดอายุ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Expiry Date AI OCR</title>
 <style>
   :root {
-    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #e5eaf0;
-    --brand: #0d9488; --brand-2: #0f766e; --brand-soft: #ccfbf1; --brand-ink: #ffffff;
-    --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --bad: #dc2626; --bad-bg: #fee2e2;
-    --input: #ffffff; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
-    --hero: linear-gradient(135deg, #0d9488 0%, #0f766e 55%, #115e59 100%);
+    color-scheme: light;
+    --bg: #f3f6f5; --card: #ffffff; --card-2: #f6f9f8; --text: #102a26; --muted: #5f7471; --line: #e2e9e7;
+    --brand: #0f9488; --brand-2: #0b766c; --brand-soft: #d9f4ef; --brand-ink: #ffffff;
+    --ok: #16794a; --ok-bg: #e1f5ea; --warn: #a15c07; --warn-bg: #fdf1d8; --bad: #c8372d; --bad-bg: #fde6e3;
+    --input: #ffffff; --shadow: 0 1px 2px rgba(16,42,38,.04), 0 10px 30px -8px rgba(16,42,38,.10);
+    --hero: radial-gradient(110% 90% at 100% 0%, rgba(255,255,255,.20) 0%, transparent 55%),
+            radial-gradient(80% 80% at 0% 100%, rgba(16,185,129,.35) 0%, transparent 60%),
+            linear-gradient(150deg, #14a497 0%, #0f8a7f 45%, #0b6b63 100%);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #1f2b40;
-      --brand: #2dd4bf; --brand-2: #14b8a6; --brand-soft: #0d3b38; --brand-ink: #032421;
-      --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
-      --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
-      --hero: linear-gradient(135deg, #115e59 0%, #134e4a 60%, #0f2f2d 100%); }
+    :root:not([data-theme="light"]) { color-scheme: dark;
+      --bg: #0b1211; --card: #121c1b; --card-2: #0f1817; --text: #e3ecea; --muted: #94a8a4; --line: #20302e;
+      --brand: #3fd0bf; --brand-2: #22b3a3; --brand-soft: #123a36; --brand-ink: #04211e;
+      --ok: #5fd394; --ok-bg: #11291d; --warn: #f2bd4b; --warn-bg: #33270c; --bad: #f37f74; --bad-bg: #371613;
+      --input: #0d1615; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -8px rgba(0,0,0,.45);
+      --hero: radial-gradient(110% 90% at 100% 0%, rgba(255,255,255,.08) 0%, transparent 55%),
+              linear-gradient(150deg, #0f4f49 0%, #0d3d39 55%, #0b2624 100%); }
   }
+  :root[data-theme="dark"] { color-scheme: dark;
+    --bg: #0b1211; --card: #121c1b; --card-2: #0f1817; --text: #e3ecea; --muted: #94a8a4; --line: #20302e;
+    --brand: #3fd0bf; --brand-2: #22b3a3; --brand-soft: #123a36; --brand-ink: #04211e;
+    --ok: #5fd394; --ok-bg: #11291d; --warn: #f2bd4b; --warn-bg: #33270c; --bad: #f37f74; --bad-bg: #371613;
+    --input: #0d1615; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -8px rgba(0,0,0,.45);
+    --hero: radial-gradient(110% 90% at 100% 0%, rgba(255,255,255,.08) 0%, transparent 55%),
+            linear-gradient(150deg, #0f4f49 0%, #0d3d39 55%, #0b2624 100%); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.55 "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    font: 16px/1.6 "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif; }
   button { font: inherit; color: inherit; cursor: pointer; }
   svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 
   /* ---------- header */
-  header { background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; }
-  .hwrap { max-width: 720px; margin: 0 auto; }
+  header { background: var(--hero); color: #fff; padding: calc(16px + env(safe-area-inset-top)) 16px 58px; border-radius: 0 0 28px 28px; }
+  .hwrap { max-width: 640px; margin: 0 auto; }
   .brandrow { display: flex; align-items: center; gap: 12px; }
-  .logo { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.16); display: grid; place-items: center; }
+  .logo { width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); display: grid; place-items: center; }
   .brandrow h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
   .brandrow .sub { font-size: 12.5px; opacity: .85; }
-  .chip-h { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+  .chip-h { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+  .chip-h i { width: 7px; height: 7px; border-radius: 50%; background: #86efac; box-shadow: 0 0 0 3px rgba(134,239,172,.25); }
+  .chip-h.off i { background: #fca5a5; box-shadow: 0 0 0 3px rgba(252,165,165,.25); }
+  .theme-btn { width: 36px; height: 36px; border-radius: 12px; border: 0; background: rgba(255,255,255,.16); color: #fff; display: grid; place-items: center; }
+  .theme-btn svg.i { width: 19px; height: 19px; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
-  .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 10px 12px; }
-  .stat b { display: block; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 10px 12px;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .stat b { display: block; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { font-size: 12px; opacity: .85; }
 
-  main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 720px; margin: -38px auto 0; position: relative; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 672px; margin: -40px auto 0; position: relative; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); }
   .card h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
   .section-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 18px 4px 8px; text-transform: uppercase; letter-spacing: .02em; }
 
@@ -52,7 +73,7 @@
   nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: color-mix(in srgb, var(--card) 92%, transparent);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line);
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
-  nav.tabs .inner { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+  nav.tabs .inner { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
   nav.tabs button { border: 0; background: none; color: var(--muted); padding: 6px 2px; border-radius: 12px;
     display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 500; position: relative; }
   nav.tabs button.active { color: var(--brand); }
@@ -163,6 +184,34 @@
     animation: spin .8s linear infinite; flex: 0 0 20px; } @keyframes spin { to { transform: rotate(360deg); } }
   .loading { display: flex; align-items: center; gap: 10px; }
   .hidden { display: none !important; }
+
+  /* ---------- how-it-works + footer */
+  .steps { display: grid; gap: 12px; margin: 4px 0 0; padding: 0; list-style: none; counter-reset: st; }
+  .steps li { display: flex; gap: 12px; align-items: flex-start; counter-increment: st; font-size: 14.5px; }
+  .steps li::before { content: counter(st); flex: 0 0 28px; height: 28px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 14px; }
+  .steps b { display: block; font-size: 15px; }
+  .demo-note { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--muted); padding: 12px 14px;
+    border-radius: 14px; background: var(--card-2); border: 1px dashed var(--line); margin-bottom: 14px; }
+  .demo-note svg.i { width: 18px; height: 18px; margin-top: 2px; color: var(--brand); }
+  footer.foot { text-align: center; font-size: 13px; color: var(--muted); padding: 6px 0 4px; }
+  footer.foot a { color: var(--brand); text-decoration: none; font-weight: 500; }
+  footer.foot a:hover { text-decoration: underline; }
+
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .btn, .icon-btn, .list-item, nav.tabs button, .theme-btn { transition: transform .08s, background-color .2s, border-color .2s, filter .2s; }
+  @media (hover: hover) {
+    .btn:hover { filter: brightness(1.06); }
+    .btn.secondary:hover, .icon-btn:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); filter: none; }
+    nav.tabs button:hover { color: var(--text); }
+    .list-item:hover { background: var(--card-2); }
+    .theme-btn:hover { background: rgba(255,255,255,.26); }
+  }
+  .list-item { margin: 0 -10px; padding-left: 10px !important; padding-right: 10px !important; border-radius: 14px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  @media (min-width: 720px) { header { border-radius: 0 0 36px 36px; } }
+  .brandrow h1 { white-space: nowrap; }
+  @media (max-width: 420px) { .chip-h span { display: none; } .chip-h { padding: 8px; } .brandrow h1 { font-size: 17px; } }
   section { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
@@ -178,6 +227,10 @@
   <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2M8.5 2h7M7 16h10"/></symbol>
   <symbol id="i-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
   <symbol id="i-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol>
 </svg>
 
@@ -186,7 +239,8 @@
     <div class="brandrow">
       <div class="logo"><svg class="i"><use href="#i-box"/></svg></div>
       <div><h1>AI OCR วันหมดอายุ</h1><div class="sub">สแกน · ตรวจ · แจ้งเตือน</div></div>
-      <span class="chip-h" id="health">กำลังเชื่อมต่อ…</span>
+      <span class="chip-h" id="health"><i></i><span>กำลังเชื่อมต่อ…</span></span>
+      <button class="theme-btn" id="themeBtn" aria-label="สลับธีม" title="สลับธีม"><svg class="i"><use href="#i-auto"/></svg></button>
     </div>
     <div class="stats">
       <div class="stat"><b id="s-total">–</b><span>สแกนทั้งหมด</span></div>
@@ -226,6 +280,17 @@
     </div>
     <div id="quality" class="card hidden"></div>
     <div id="result"></div>
+    <div class="card" id="howto">
+      <h2 style="margin-bottom:12px">ใช้งานง่าย ๆ 3 ขั้นตอน</h2>
+      <ol class="steps">
+        <li><div><b>ถ่ายหรือเลือกรูปฉลาก</b><span class="muted">ให้วันที่อยู่กลางภาพ ชัด ไม่เบลอ</span></div></li>
+        <li><div><b>AI อ่านวันหมดอายุให้</b><span class="muted">พร้อมบอกว่ามั่นใจกี่เปอร์เซ็นต์ และเหลืออีกกี่วัน</span></div></li>
+        <li><div><b>ตรวจ/แก้ถ้าจำเป็น</b><span class="muted">ภาพที่ไม่มั่นใจจะเข้าคิวตรวจ คำแก้ของคุณช่วยสอน AI</span></div></li>
+      </ol>
+    </div>
+    <div class="demo-note"><svg class="i"><use href="#i-info"/></svg>
+      <div>นี่คือเว็บสาธิตแบบสาธารณะ ภาพที่อัปโหลดทุกคนที่เปิดลิงก์นี้มองเห็นได้ และอาจถูกล้างเมื่อเซิร์ฟเวอร์รีสตาร์ท กรุณาอย่าอัปโหลดข้อมูลส่วนตัว</div></div>
+    <footer class="foot"><a href="/docs" target="_blank" rel="noopener">API docs</a> · <a href="https://github.com/106-jirayu/expiry-ocr" target="_blank" rel="noopener">ซอร์สโค้ดบน GitHub</a></footer>
   </section>
 
   <!-- ====== QUEUE ====== -->
@@ -311,6 +376,20 @@ function iso(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 function thaiDate(s) { if (!s) return "-"; const [y, m, d] = s.split("-").map(Number); return `${d} ${MONTH_S[m - 1]} ${y + 543}`; }
 function empty(e, text) { return `<div class="empty"><span class="e">${e}</span>${text}</div>`; }
 const loading = (t) => `<div class="loading"><div class="spinner"></div><div>${t}</div></div>`;
+
+// ---------- theme (auto → light → dark) จำไว้ในเครื่อง
+const THEMES = ["auto", "light", "dark"], THEME_ICON = { auto: "i-auto", light: "i-sun", dark: "i-moon" },
+  THEME_TH = { auto: "ธีม: ตามเครื่อง", light: "ธีม: สว่าง", dark: "ธีม: มืด" };
+function applyTheme(t) {
+  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = t;
+  $("#themeBtn use").setAttribute("href", "#" + THEME_ICON[t]); $("#themeBtn").title = THEME_TH[t];
+  const dark = t === "dark" || (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#0f4f49" : "#0f9488";
+}
+let theme = "auto"; try { theme = localStorage.getItem("theme") || "auto"; } catch {}
+applyTheme(theme);
+$("#themeBtn").onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; applyTheme(theme);
+  try { localStorage.setItem("theme", theme); } catch {} toast(THEME_TH[theme], 1400); };
 
 // ---------- tabs
 document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
@@ -631,8 +710,8 @@ async function refreshCount() {
   } catch {}
   pollAlerts();
 }
-fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `● ${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
-  .catch(() => { $("#health").textContent = "ออฟไลน์"; });
+fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health span").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
+  .catch(() => { $("#health span").textContent = "ออฟไลน์"; $("#health").classList.add("off"); });
 refreshCount();
 </script>
 </body>

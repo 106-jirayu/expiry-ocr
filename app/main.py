@@ -82,3 +82,13 @@ def mobile_page():
 @app.get("/manifest.webmanifest", include_in_schema=False)
 def manifest():
     return FileResponse(WEB_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/icon.svg", include_in_schema=False)
+def icon():
+    return FileResponse(WEB_DIR / "icon.svg", media_type="image/svg+xml")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(WEB_DIR / "icon.svg", media_type="image/svg+xml")
