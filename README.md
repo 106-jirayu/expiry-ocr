@@ -345,21 +345,26 @@ v2 = แก้ KIE (ป้าย BB/PROD/L:, ตัวคั่นวันท�
 
 ## 12. เผยแพร่ให้คนอื่นเปิดหน้าเว็บได้ (ฟรี)
 
-GitHub Pages เปิดได้เฉพาะหน้าเว็บนิ่ง แต่ระบบนี้ต้องมีเซิร์ฟเวอร์ Python สำหรับ AI OCR จึงใช้ **Hugging Face Spaces** (ฟรี, CPU 16GB)
+GitHub Pages เปิดได้เฉพาะหน้าเว็บนิ่ง แต่ระบบนี้ต้องมีเซิร์ฟเวอร์ Python สำหรับ AI OCR จึงใช้ **Hugging Face Spaces** (ฟรี, CPU 2 vCPU / RAM 16GB, ได้ลิงก์ HTTPS)
 
-**ครั้งแรก (ประมาณ 5 นาที)**
-1. สมัคร/ล็อกอิน https://huggingface.co → **New Space** → ตั้งชื่อ (เช่น `expiry-ocr`) → SDK เลือก **Docker** (Blank) → Public → Create
-2. สร้าง token ที่ https://huggingface.co/settings/tokens (สิทธิ์ **Write**)
+**ครั้งแรก (ประมาณ 5 นาที ทำครั้งเดียว)**
+1. สมัคร/ล็อกอิน https://huggingface.co
+2. สร้าง token ที่ https://huggingface.co/settings/tokens → **Create new token** → ชนิด **Write** → คัดลอกไว้
 3. ใน GitHub repo: **Settings → Secrets and variables → Actions**
-   - แท็บ Secrets: เพิ่ม `HF_TOKEN` = token จากข้อ 2
-   - แท็บ Variables: เพิ่ม `HF_SPACE` = `<ชื่อผู้ใช้ HF>/<ชื่อ Space>` เช่น `jirayu/expiry-ocr`
-4. ไปที่แท็บ **Actions → Deploy to Hugging Face Spaces → Run workflow**
-5. รอ Space build เสร็จ (~5 นาที) จะได้ลิงก์ `https://<ชื่อผู้ใช้>-expiry-ocr.hf.space` ส่งให้ใครก็เปิดได้
-   และเป็น HTTPS จึงใช้ปุ่ม "เปิดกล้อง" บนมือถือได้
+   - แท็บ **Secrets** → New repository secret: `HF_TOKEN` = token จากข้อ 2
+   - แท็บ **Variables** → New repository variable: `HF_SPACE` = `<ชื่อผู้ใช้ HF>/expiry-ocr`
+4. แท็บ **Actions → Deploy to Hugging Face Spaces → Run workflow**
+   (workflow จะสร้าง Space แบบ Docker ให้เองถ้ายังไม่มี ไม่ต้องกด New Space)
+5. เปิด `https://huggingface.co/spaces/<ชื่อผู้ใช้ HF>/expiry-ocr` รอ build เสร็จ (~5–8 นาที ครั้งแรก)
+   จะได้ลิงก์ตรง `https://<ชื่อผู้ใช้>-expiry-ocr.hf.space` ส่งให้ใครก็เปิดได้ และใช้ปุ่ม "เปิดกล้อง" บนมือถือได้
 
-หลังจากนั้นทุกครั้งที่ push เข้า `main` ระบบจะ deploy ใหม่ให้อัตโนมัติ
+หลังจากนั้นทุกครั้งที่ push/merge เข้า `main` ระบบจะ deploy ใหม่ให้อัตโนมัติ
+
+workflow อัปโหลดด้วย `huggingface_hub` (HF ไม่รับไฟล์ภาพผ่าน `git push` ธรรมดา) และตัดไฟล์ที่ไม่ต้องใช้ตอนรัน
+เช่น ภาพประกอบ README ชุดทดสอบ และรายงาน ออก เพื่อให้ build เร็ว
 
 ทางเลือกอื่น: `Dockerfile` ใช้กับ Render / Railway / Google Cloud Run ได้เช่นกัน (ตั้ง port ผ่าน env `PORT`)
 
-> หมายเหตุ: บน Spaces ฟรี ฐานข้อมูลและภาพที่อัปโหลดจะหายเมื่อ Space รีสตาร์ท (เหมาะกับการสาธิต)
-> และทุกคนที่มีลิงก์สามารถตรวจ/แก้ในคิวได้ ถ้าใช้งานจริงควรเพิ่มระบบล็อกอิน
+> หมายเหตุ: บน Spaces ฟรี ฐานข้อมูลและภาพที่อัปโหลดจะหายเมื่อ Space รีสตาร์ท/หลับ (Space ที่ไม่มีคนใช้ 48 ชม. จะหลับ
+> และตื่นเองเมื่อมีคนเปิด ใช้เวลาราว 1 นาที) หน้าเว็บแสดงคำเตือนว่าเป็นเว็บสาธิตและทุกคนที่มีลิงก์เห็นภาพในคิว
+> ถ้าใช้งานจริงควรเพิ่มระบบล็อกอินและฐานข้อมูลถาวร (เช่น PostgreSQL ผ่าน `DATABASE_URL`)
