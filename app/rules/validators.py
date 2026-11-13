@@ -10,6 +10,7 @@ R07 shelf_life         อายุสินค้า (EXP - MFG) ต้อง�
 R08 lot_format         Lot number ต้องเป็นตัวอักษร/ตัวเลข 3-20 ตัว
 R08b                   (lot_format ใช้กับ lot ที่พบ label แต่อ่านค่าไม่ได้ด้วย)
 R10 unclaimed_date     พบวันที่อื่นในภาพที่ไม่ได้จัดเป็น EXP/MFG (อาจหา label ไม่เจอ)
+R11 unambiguous_date   วันที่ต้องตีความได้แบบเดียว (เช่น "21.06.25" อาจเป็น 2021-06-25 หรือ 2025-06-21)
 R09 not_expired        (warning) สินค้าหมดอายุแล้ว — แจ้งเตือนแต่ไม่บังคับส่ง HITL
 
 severity: "error" = ไม่ผ่าน -> ส่ง HITL, "warning" = แจ้งเตือนเท่านั้น
@@ -22,7 +23,7 @@ from datetime import date
 
 from app.extraction.kie import FieldPrediction
 
-ALLOWED_FORMATS = {"YYYY-MM-DD", "DD/MM/YYYY", "DD/MM/YY", "DD MON YYYY", "MON YYYY", "MM/YYYY",
+ALLOWED_FORMATS = {"YYYY-MM-DD", "DD/MM/YYYY", "DD/MM/YY", "YY/MM/DD", "DD MON YYYY", "MON DD YYYY", "MON YYYY", "MM/YYYY",
                    "DDMMYY", "DDMMYYYY"}
 LOT_RE = re.compile(r"^[A-Z0-9][A-Z0-9\-/]{2,19}$")
 
@@ -76,6 +77,10 @@ def validate(fields: dict[str, FieldPrediction], today: date | None = None,
             ok = f.value is not None
             out.append(RuleResult("R04", "calendar_valid", ok, f.name,
                                   "วันที่มีอยู่จริง" if ok else f"ไม่มีวันที่นี้ในปฏิทิน: {f.raw_text!r}"))
+        if c.get("ambiguous"):
+            out.append(RuleResult("R11", "unambiguous_date", False, f.name,
+                                  f"{f.raw_text!r} อ่านได้ 2 แบบ: {f.value} (ปี.เดือน.วัน) หรือ "
+                                  f"{c.get('alternative')} (วัน.เดือน.ปี) กรุณายืนยัน"))
 
     e, m = _d(exp), _d(mfg)
     if e and m:

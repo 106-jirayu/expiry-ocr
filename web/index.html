@@ -148,6 +148,7 @@
   .field .pct { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
   .bar i { display: block; height: 100%; border-radius: 3px; }
+  .list-item .why { font-size: 12.5px; color: var(--warn); margin-top: 2px; }
   ul.reasons { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
   .notice { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
   .notice.bad { background: var(--bad-bg); color: var(--bad); }
@@ -501,7 +502,7 @@ async function saveManual(force) {
   $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 const NOIMG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#2a2f3a"/><text x="28" y="37" font-size="26" text-anchor="middle">✍️</text></svg>');
-function thumb(id, manual) { return `<img loading="lazy" src="${manual ? NOIMG : `${API}/documents/${id}/image?variant=original`}" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
+function thumb(id, manual) { return `<img loading="lazy" src="${manual ? NOIMG : `${API}/documents/${id}/image?variant=thumb`}" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
 
 $("#fileInput").onchange =(e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
 
@@ -562,11 +563,24 @@ async function upload(blob, name) {
 }
 
 // ---------- แสดงผล + HITL review บนมือถือ
+const RULE_SHORT = { R01: "ไม่พบวันหมดอายุ", R02: "รูปแบบวันที่แปลก", R03: "ตัวเลขวันที่ผิดช่วง", R04: "ไม่มีวันนี้ในปฏิทิน",
+  R05: "EXP อยู่ก่อน MFG", R06: "วันผลิตอยู่ในอนาคต", R07: "อายุสินค้านานผิดปกติ", R08: "Lot ผิดรูปแบบ",
+  R10: "พบวันที่อื่นในภาพ", R11: "วันที่อ่านได้ 2 แบบ" };
+// เหตุผลสั้น ๆ 1 ข้อสำหรับแสดงในรายการคิว (เลือกข้อที่คนตรวจควรรู้ก่อน)
+function reasonShort(reasons) {
+  const rs = reasons || [], rule = rs.find((r) => r.startsWith("RULE_FAIL:"));
+  if (rule) return RULE_SHORT[rule.split(":")[1]] || "ไม่ผ่านกฎธุรกิจ";
+  if (rs.some((r) => r.startsWith("ENSEMBLE_DISAGREE:"))) return "อ่านหลายรอบได้ไม่ตรงกัน";
+  if (rs.includes("NO_LABEL:exp_date")) return "ไม่มีคำว่า EXP กำกับ";
+  if (rs.some((r) => r.startsWith("LOW_CONFIDENCE:"))) return "ภาพไม่ชัด ความมั่นใจต่ำ";
+  return "";
+}
 function reasonTh(r, rules) {
+  if (r === "NO_LABEL:exp_date") return "ไม่พบคำว่า EXP/BB/หมดอายุ กำกับวันที่ — ระบบเดาว่าเป็นวันหมดอายุ (อาจเป็นวันผลิต)";
   if (r.startsWith("LOW_CONFIDENCE:")) { const [f, v] = r.slice(15).split("="); return `ความมั่นใจต่ำ: ${FIELD_TH[f] || f} ${v.split(" ")[0]}`; }
   if (r.startsWith("ENSEMBLE_DISAGREE:")) { const f = r.slice(18).split(" ")[0]; return `อ่านหลายรอบได้ไม่ตรงกัน: ${FIELD_TH[f] || f}`; }
   if (r.startsWith("RULE_FAIL:")) { const [id, , f] = r.slice(10).split(":");
-    const rule = (rules || []).find((x) => x.rule_id === id && x.field === f && !x.passed); return `ไม่ผ่านกฎ ${id}: ${rule ? rule.message : f}`; }
+    const rule = (rules || []).find((x) => x.rule_id === id && String(x.field ?? "None") === f && !x.passed); return `ไม่ผ่านกฎ ${id}: ${rule ? rule.message : f}`; }
   return r;
 }
 function confColor(c) { return c >= THRESHOLD ? "var(--ok)" : c >= 0.7 ? "var(--warn)" : "var(--bad)"; }
@@ -775,7 +789,8 @@ function itemHtml(d) {
   return `<div class="list-item" data-id="${d.document_id}">
     ${thumb(d.document_id, d.engine === "manual")}
     <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
-    <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div></div>
+    <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div>
+    ${d.status === "PENDING_REVIEW" && reasonShort(d.route_reasons) ? `<div class="why">⚠️ ${esc(reasonShort(d.route_reasons))}</div>` : ""}</div>
     <span class="badge ${cls}">${st}</span></div>`;
 }
 async function openDoc(id) {

@@ -265,3 +265,74 @@ def test_unclaimed_date_routes_to_review():
     _, rules, d = run(["MFG 01/01/2026", "EXP 01/01/2028", "12/12/2027"])
     assert any(r.rule_id == "R10" and not r.passed for r in rules)
     assert not d.auto_approved
+
+
+# ---------- รูปแบบที่พบบนฉลากจริง (ชุด datasets/real_expdate)
+@pytest.mark.parametrize("text,iso,fmt", [
+    ("BEST BY APR 14 2027", "2027-04-14", "MON DD YYYY"),
+    ("EXP:DEC-28-2027", "2027-12-28", "MON DD YYYY"),
+    ("BestByFEB/26/27 10:48NDL2A", "2027-02-26", "MON DD YYYY"),
+    ("BEST BY AUG292027", "2027-08-29", "MON DD YYYY"),
+    ("USE BY 15FEB27B 09:07", "2027-02-15", "DD MON YYYY"),       # ตัวอักษรท้ายวันที่ไม่ถูกแก้เป็นเลข 8
+    ("EXP 11APR_2027", "2027-04-11", "DD MON YYYY"),
+    ("EXP 20270808", "2027-08-08", "YYYY-MM-DD"),
+    ("EXP 202707.10", "2027-07-10", "YYYY-MM-DD"),
+    ("SELL BY 03/03/27", "2027-03-03", "DD/MM/YY"),
+    ("BEST BFERE : 2027-07-05", "2027-07-05", "YYYY-MM-DD"),
+    ("유통기한 2027.09.04", "2027-09-04", "YYYY-MM-DD"),
+    ("賞味期限 2027.09.04", "2027-09-04", "YYYY-MM-DD"),
+])
+def test_real_label_formats(text, iso, fmt):
+    f, _, _ = run([text])
+    assert f["exp_date"].value == iso
+    assert f["exp_date"].date_format == fmt
+
+
+def test_mon_yyyy_is_not_read_as_mon_dd_yy():
+    f, _, _ = run(["EXP DEC 2027"])
+    assert f["exp_date"].value == "2027-12-31" and f["exp_date"].date_format == "MON YYYY"
+
+
+def test_year_first_short_date_is_ambiguous_and_reviewed():
+    # วันนี้ 2026: "12.01.26" แบบ DD/MM/YY = 2026-01-12 (ใกล้กว่า) จึงคงไว้ ไม่ถือว่ากำกวม
+    f, _, _ = run(["EXP 12.01.26"])
+    assert f["exp_date"].value == "2026-01-12" and not f["exp_date"].components["ambiguous"]
+    # "26.06.13": DD/MM/YY = 2013 (ไกล) / YY.MM.DD = 2026-06-13 (ใกล้) -> เลือก YY.MM.DD แต่ส่งคนยืนยัน
+    f, rules, d = run(["EXP 26.06.13"])
+    assert f["exp_date"].value == "2026-06-13" and f["exp_date"].date_format == "YY/MM/DD"
+    r11 = [r for r in rules if r.rule_id == "R11"]
+    assert r11 and not r11[0].passed and "2013-06-26" in r11[0].message
+    assert not d.auto_approved
+
+
+def test_unlabeled_date_is_not_auto_approved():
+    _, _, d = run(["31/12/2027"])
+    assert not d.auto_approved and "NO_LABEL:exp_date" in d.reasons
+
+
+def test_floating_junk_numbers_are_not_mfg():
+    # รหัสสินค้า "08-0121" เคยถูกอ่านเป็นวันผลิตปี 121, "080730-5336" เป็นวันหมดอายุ 2030
+    f, _, _ = run(["13/08/2027", "08-0121-9-92202-60", "080730-5336"])
+    assert f["exp_date"].value == "2027-08-13"
+    assert "mfg_date" not in f
+
+
+def test_inferred_mfg_must_be_before_exp():
+    f, _, _ = run(["BEST BEFORE 28.04.2027", "L1002021551 01/06/2032"])
+    assert f["exp_date"].value == "2027-04-28"
+    assert "mfg_date" not in f
+
+
+def test_parsed_value_beats_unreadable_votes():
+    from app.extraction.consensus import merge_passes
+    good = extract_fields([L("BEST BY FEB/21/27")], TODAY)
+    bad = extract_fields([L("BEST BY FEBi21/27 19:18")], TODAY)
+    merged = merge_passes([bad, good, bad])
+    assert merged["exp_date"].value == "2027-02-21"
+    assert merged["exp_date"].agreement < 1
+
+
+def test_word_with_digits_is_not_unclaimed_date():
+    # "06017Seoul" เคยถูกอ่านเป็นวันที่ 06/01/75 แล้วส่งคนตรวจด้วยกฎ R10
+    _, rules, _ = run(["BEST BEFORE 28.04.2027", "Importeur:FineF&BServiceCo Ltd.06017Seoul/Korea"])
+    assert not any(r.rule_id == "R10" and not r.passed for r in rules)

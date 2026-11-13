@@ -31,7 +31,10 @@ def merge_passes(passes: list[dict[str, FieldPrediction]]) -> dict[str, FieldPre
                 votes[f.value if f.value is not None else f"RAW:{f.raw_text}"].append(f)
         if not votes:
             continue
-        best_key = max(votes, key=lambda k: (len(votes[k]), sum(min(f.char_confidences or [0]) for f in votes[k])))
+        # ค่าที่แยกเป็นวันที่/รหัสได้ ชนะเสียงของรอบที่ "พบ label แต่อ่านค่าไม่ได้" เสมอ
+        # (agreement ยังต่ำ -> ยังต้องให้คนตรวจ แต่คนตรวจจะได้ค่าที่น่าจะถูกเติมไว้ให้)
+        best_key = max(votes, key=lambda k: (not str(k).startswith("RAW:"), len(votes[k]),
+                                             sum(min(f.char_confidences or [0]) for f in votes[k])))
         group = votes[best_key]
         rep = max(group, key=lambda f: min(f.char_confidences or [0]))
         # ใช้ char confidence เฉลี่ยของรอบที่เห็นตรงกัน (ตัวแทนความชัดของภาพ)

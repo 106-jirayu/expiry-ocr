@@ -25,16 +25,17 @@ _LOT_END = r"(?![A-Z]+(?:[^A-Z0-9]|$))"                                       # 
 
 LABELS = {
     "exp_date": re.compile(
-        r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]F[O0]RE(\s*END)?|[B8][E3][S5]T\s*(IF\s*USED\s*)?[B8]Y|"
-        r"U[S5]E\s*([B8]Y|[B8][E3]F[O0]RE)|"
+        r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]?F[O0]?RE(\s*END)?|[B8][E3][S5]T\s*(IF\s*USED\s*)?[B8]Y|"  # รวม OCR สะกดหาย: BEST BFERE
+        r"U[S5]E\s*([B8]Y|[B8][E3]F[O0]RE)|[S5]ELL\s*[B8]Y|DI[S5]PLAY\s*UNTIL|"
         rf"EXP(IRY|IRES|IRE|IRATION|IRED)?([.\s]*DATE)?{_NOT_WORD}|EXD{_NOT_WORD}|EX(?=\s*[:.]?\s*\d)|"  # ไม่รวม EXPORT, EXPRESS
         r"(?<![A-Z0-9])(BB[ED]?(?![A-Z])|[B8]{2}E?(?![A-Z0-9]))|"
-        r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรบริโภคภายใน|ควรใช้ก่อน|ใช้ก่อน)\s*[:.\-]?",
+        r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรบริโภคภายใน|ควรใช้ก่อน|ใช้ก่อน|"
+        r"유통기한|소비기한|賞味期限|消費期限|保质期至|有效期至|此日期前最佳)\s*[:.\-]?",
         re.I),
     "mfg_date": re.compile(
         r"(?<![A-Z])((MFG|M[EI]?F\s?[G6D0O]|M[EI][G6]|MANUFACTURED?(?!\s*BY)|MFD|PR[O0]D(UCTI[O0]N)?|PKD|PACKED(\s*ON)?)"
         rf"([.\s]*DATE)?{_NOT_WORD}|"  # ไม่รวม MEGA, PRODUCT, MANUFACTURED BY
-        r"วันผลิต|(?<!ผู้)(?<!สถานที่)ผลิต(?!โดย|ภัณฑ์|จาก|ใน|และ|เพื่อ|ที่))\s*[:.\-]?",  # ไม่รวม ผลิตภัณฑ์, ผลิตโดย, ผู้ผลิต
+        r"제조일자?|製造年月日|生产日期|วันผลิต|(?<!ผู้)(?<!สถานที่)ผลิต(?!โดย|ภัณฑ์|จาก|ใน|และ|เพื่อ|ที่))\s*[:.\-]?",  # ไม่รวม ผลิตภัณฑ์, ผลิตโดย, ผู้ผลิต
         re.I),
     "lot_number": re.compile(
         # N0 ตามด้วยตัวเลขเป็นส่วนหนึ่งของรหัส ("LOT N09413G") ไม่ใช่คำว่า NO.
@@ -132,7 +133,8 @@ def _date_prediction(name: str, line: TextLine, idx: int, offset: int, pd: Parse
         name=name, raw_text=line.text[s:e], value=d.isoformat() if d else None,
         confidence=min(confs), char_confidences=confs, date_format=pd.format,
         components={"day": pd.day, "month": pd.month, "year": pd.year,
-                    "day_implied": pd.day_implied, "buddhist_era": pd.buddhist_era},
+                    "day_implied": pd.day_implied, "buddhist_era": pd.buddhist_era,
+                    "ambiguous": pd.ambiguous, "alternative": pd.alternative},
         polygon=line.polygon, line_index=idx, line_text=line.text, label=label,
         ocr_fixes=fixes, inferred=inferred,
     )
@@ -195,6 +197,9 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
                 continue
             fixed, fixes = fix_digits(seg)
             dates = find_dates(fixed, today)
+            if not dates:
+                # การแก้ตัวอักษรอาจทำให้วันที่เสีย เช่น "15FEB22B" -> "15FEB228" จึงลองข้อความเดิมอีกครั้ง
+                fixed, dates = seg, find_dates(seg, today)
             if pending and len(dates) >= 2:
                 p_name, p_label, _, _ = pending
                 pd = dates.pop(0)
@@ -223,18 +228,39 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
     def missing(name):
         return name not in found or found[name].value is None
 
+    floating = [f for f in floating if _plausible(f[2], today)]
     if floating and (missing("exp_date") or missing("mfg_date")):
-        def key(item):
-            d = item[2].to_date()
-            return d or date.min
-        floating.sort(key=key)
+        # วันที่ที่มีตัวคั่นชัดเจน (31/12/2025) น่าเชื่อกว่าตัวเลขติดกัน (311225) ที่อาจเป็นรหัสสินค้า/บาร์โค้ด
+        strong = [f for f in floating if f[2].format not in COMPACT_FORMATS] or floating
+        strong.sort(key=lambda item: item[2].to_date())
         if missing("exp_date"):
-            idx, line, pd, off, fx = floating.pop(-1)
+            idx, line, pd, off, fx = strong.pop(-1)
             found["exp_date"] = _date_prediction("exp_date", line, idx, off, pd, fx, None, True)
-        if missing("mfg_date") and floating:
-            idx, line, pd, off, fx = floating.pop(0)
-            found["mfg_date"] = _date_prediction("mfg_date", line, idx, off, pd, fx, None, True)
+        exp_d = _value_date(found.get("exp_date"))
+        if missing("mfg_date"):
+            # MFG ที่เดาเองต้องอยู่ก่อน EXP (ถ้ารู้ EXP) — กันตัวเลขขยะบนฉลากถูกจับเป็นวันผลิต
+            cands = [f for f in strong if exp_d is None or f[2].to_date() < exp_d]
+            if cands:
+                idx, line, pd, off, fx = cands[0]
+                found["mfg_date"] = _date_prediction("mfg_date", line, idx, off, pd, fx, None, True)
     return found
+
+
+COMPACT_FORMATS = {"DDMMYY", "DDMMYYYY"}
+
+
+def _plausible(pd: ParsedDate, today: date | None, years: int = 20) -> bool:
+    """วันที่ลอย ๆ ต้องเป็นวันที่จริงและอยู่ไม่ไกลจากวันนี้ (ตัด "0121-08-01" จากรหัส 08-0121)"""
+    d = pd.to_date()
+    t = today or date.today()
+    return d is not None and abs(d.year - t.year) <= years
+
+
+def _value_date(f: FieldPrediction | None) -> date | None:
+    try:
+        return date.fromisoformat(f.value) if f and f.value else None
+    except ValueError:
+        return None
 
 
 def unclaimed_dates(lines: list[TextLine], fields: dict[str, FieldPrediction],
@@ -249,7 +275,10 @@ def unclaimed_dates(lines: list[TextLine], fields: dict[str, FieldPrediction],
         fixed, _ = fix_digits(line.text.upper())
         for pd in find_dates(fixed, today):
             d = pd.to_date()
-            if d is None or not 2000 <= d.year <= 2100 or d.isoformat() in claimed:
+            if d is None or not 2000 <= d.year <= 2100 or d.isoformat() in claimed or not _plausible(pd, today):
+                continue
+            # ตัวเลขติดกันที่ต้องแก้ตัวอักษรถึงจะเป็นวันที่ (เช่น "06017Seoul" -> 060175) คือข้อความทั่วไป ไม่ใช่วันที่
+            if pd.format in COMPACT_FORMATS and fixed[pd.start:pd.end] != line.text.upper()[pd.start:pd.end]:
                 continue
             if any(pd.raw in r or r in pd.raw for r in claimed_raw) or pd.raw in lot_raw:
                 continue

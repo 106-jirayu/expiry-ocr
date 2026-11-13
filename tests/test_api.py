@@ -86,3 +86,26 @@ def test_manual_entry():
         bad = {"user": "qa1", "exp_date": "2000-01-01", "mfg_date": "2001-01-01"}
         assert c.post("/api/v1/documents/manual", json=bad).status_code == 422
         assert c.post("/api/v1/documents/manual", json={**bad, "force": True}).status_code == 200
+
+
+def test_thumbnail_is_small_jpeg(tmp_path: Path):
+    path, _ = _images(tmp_path, 1)[0]
+    with TestClient(app) as c:
+        doc = c.post("/api/v1/documents", files={"file": (path.name, path.read_bytes(), "image/png")}).json()
+        r = c.get(f"/api/v1/documents/{doc['document_id']}/image?variant=thumb")
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "image/jpeg"
+        assert "max-age" in r.headers.get("cache-control", "")
+        import cv2
+        import numpy as np
+        img = cv2.imdecode(np.frombuffer(r.content, np.uint8), cv2.IMREAD_COLOR)
+        assert max(img.shape[:2]) <= 240
+
+
+def test_huge_image_is_rejected_cleanly():
+    import cv2
+    import numpy as np
+    ok, buf = cv2.imencode(".png", np.zeros((8000, 8000, 3), np.uint8))   # 64 ล้านพิกเซล แต่ไฟล์เล็ก
+    with TestClient(app) as c:
+        r = c.post("/api/v1/documents", files={"file": ("bomb.png", buf.tobytes(), "image/png")})
+        assert r.status_code == 400
