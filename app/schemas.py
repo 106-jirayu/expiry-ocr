@@ -17,6 +17,15 @@ class ReviewIn(BaseModel):
     force: bool = False
 
 
+class ManualEntryIn(BaseModel):
+    user: str = Field(..., min_length=1, examples=["qa_somchai"])
+    exp_date: str = Field(..., description="วันหมดอายุ YYYY-MM-DD", examples=["2027-03-31"])
+    mfg_date: str | None = Field(None, description="วันผลิต YYYY-MM-DD")
+    lot_number: str | None = None
+    product_name: str | None = Field(None, max_length=200, description="ชื่อสินค้า (แสดงแทนชื่อไฟล์)")
+    force: bool = False
+
+
 class AckIn(BaseModel):
     user: str = Field(..., min_length=1, description="ผู้รับทราบ")
 

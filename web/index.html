@@ -13,32 +13,35 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Expiry Date AI OCR</title>
 <style>
+  /* สีหลัก (เลือกได้จากปุ่ม 🎨): a1 เข้ม, a2 เข้มกว่า, a3 เข้มสุด, al สว่าง (ใช้ในโหมดมืด) */
+  :root, [data-accent="teal"] { --a1: #0d9488; --a2: #0f766e; --a3: #115e59; --al: #2dd4bf; }
+  [data-accent="blue"]   { --a1: #2563eb; --a2: #1d4ed8; --a3: #1e3a8a; --al: #60a5fa; }
+  [data-accent="purple"] { --a1: #7c3aed; --a2: #6d28d9; --a3: #4c1d95; --al: #a78bfa; }
+  [data-accent="pink"]   { --a1: #db2777; --a2: #be185d; --a3: #831843; --al: #f472b6; }
+  [data-accent="orange"] { --a1: #ea580c; --a2: #c2410c; --a3: #7c2d12; --al: #fb923c; }
+  [data-accent="green"]  { --a1: #16a34a; --a2: #15803d; --a3: #14532d; --al: #4ade80; }
   :root {
     color-scheme: light;
-    --bg: #f3f6f5; --card: #ffffff; --card-2: #f6f9f8; --text: #102a26; --muted: #5f7471; --line: #e2e9e7;
-    --brand: #0f9488; --brand-2: #0b766c; --brand-soft: #d9f4ef; --brand-ink: #ffffff;
-    --ok: #16794a; --ok-bg: #e1f5ea; --warn: #a15c07; --warn-bg: #fdf1d8; --bad: #c8372d; --bad-bg: #fde6e3;
-    --input: #ffffff; --shadow: 0 1px 2px rgba(16,42,38,.04), 0 10px 30px -8px rgba(16,42,38,.10);
-    --hero: radial-gradient(110% 90% at 100% 0%, rgba(255,255,255,.20) 0%, transparent 55%),
-            radial-gradient(80% 80% at 0% 100%, rgba(16,185,129,.35) 0%, transparent 60%),
-            linear-gradient(150deg, #14a497 0%, #0f8a7f 45%, #0b6b63 100%);
+    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #cbd5e1;
+    --brand: var(--a1); --brand-2: var(--a2); --brand-soft: color-mix(in srgb, var(--a1) 16%, #fff); --brand-ink: #ffffff;
+    --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --bad: #dc2626; --bad-bg: #fee2e2;
+    --input: #ffffff; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+    --hero: linear-gradient(135deg, var(--a1) 0%, var(--a2) 55%, var(--a3) 100%);
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { color-scheme: dark;
-      --bg: #0b1211; --card: #121c1b; --card-2: #0f1817; --text: #e3ecea; --muted: #94a8a4; --line: #20302e;
-      --brand: #3fd0bf; --brand-2: #22b3a3; --brand-soft: #123a36; --brand-ink: #04211e;
-      --ok: #5fd394; --ok-bg: #11291d; --warn: #f2bd4b; --warn-bg: #33270c; --bad: #f37f74; --bad-bg: #371613;
-      --input: #0d1615; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -8px rgba(0,0,0,.45);
-      --hero: radial-gradient(110% 90% at 100% 0%, rgba(255,255,255,.08) 0%, transparent 55%),
-              linear-gradient(150deg, #0f4f49 0%, #0d3d39 55%, #0b2624 100%); }
+    :root:not([data-theme="light"]) { color-scheme: dark; --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
+      --brand: var(--al); --brand-2: var(--a1); --brand-soft: color-mix(in srgb, var(--al) 20%, #121a2a);
+      --brand-ink: color-mix(in srgb, var(--a3) 45%, #000);
+      --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
+      --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+      --hero: linear-gradient(135deg, var(--a3) 0%, color-mix(in srgb, var(--a3) 75%, #000) 60%, color-mix(in srgb, var(--a3) 45%, #000) 100%); }
   }
-  :root[data-theme="dark"] { color-scheme: dark;
-    --bg: #0b1211; --card: #121c1b; --card-2: #0f1817; --text: #e3ecea; --muted: #94a8a4; --line: #20302e;
-    --brand: #3fd0bf; --brand-2: #22b3a3; --brand-soft: #123a36; --brand-ink: #04211e;
-    --ok: #5fd394; --ok-bg: #11291d; --warn: #f2bd4b; --warn-bg: #33270c; --bad: #f37f74; --bad-bg: #371613;
-    --input: #0d1615; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -8px rgba(0,0,0,.45);
-    --hero: radial-gradient(110% 90% at 100% 0%, rgba(255,255,255,.08) 0%, transparent 55%),
-            linear-gradient(150deg, #0f4f49 0%, #0d3d39 55%, #0b2624 100%); }
+  :root[data-theme="dark"] { color-scheme: dark; --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
+    --brand: var(--al); --brand-2: var(--a1); --brand-soft: color-mix(in srgb, var(--al) 20%, #121a2a);
+    --brand-ink: color-mix(in srgb, var(--a3) 45%, #000);
+    --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
+    --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    --hero: linear-gradient(135deg, var(--a3) 0%, color-mix(in srgb, var(--a3) 75%, #000) 60%, color-mix(in srgb, var(--a3) 45%, #000) 100%); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
@@ -47,25 +50,31 @@
   svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 
   /* ---------- header */
-  header { background: var(--hero); color: #fff; padding: calc(16px + env(safe-area-inset-top)) 16px 58px; border-radius: 0 0 28px 28px; }
-  .hwrap { max-width: 640px; margin: 0 auto; }
+  header { position: relative; background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; border-radius: 0 0 28px 28px; }
+  .hwrap { max-width: 720px; margin: 0 auto; }
   .brandrow { display: flex; align-items: center; gap: 12px; }
   .logo { width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); display: grid; place-items: center; }
   .brandrow h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
   .brandrow .sub { font-size: 12.5px; opacity: .85; }
-  .chip-h { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
-  .chip-h i { width: 7px; height: 7px; border-radius: 50%; background: #86efac; box-shadow: 0 0 0 3px rgba(134,239,172,.25); }
-  .chip-h.off i { background: #fca5a5; box-shadow: 0 0 0 3px rgba(252,165,165,.25); }
-  .theme-btn { width: 36px; height: 36px; border-radius: 12px; border: 0; background: rgba(255,255,255,.16); color: #fff; display: grid; place-items: center; }
-  .theme-btn svg.i { width: 19px; height: 19px; }
+  .chip-h { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+  button.chip-h { border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 13px; padding: 6px 12px; }
+  .theme-panel { position: absolute; right: 16px; top: calc(60px + env(safe-area-inset-top)); z-index: 30; width: 260px;
+    background: var(--card); color: var(--text); border: 1.5px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+  .theme-panel .t { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .seg button { border: 1.5px solid var(--line); background: var(--card-2); border-radius: 10px; padding: 6px 0; font-size: 13.5px; }
+  .seg button.on { border-color: var(--brand); background: var(--brand-soft); font-weight: 600; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; outline: 1.5px solid var(--line); }
+  .swatches button.on { border-color: var(--card); outline: 2.5px solid var(--text); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 10px 12px;
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   .stat b { display: block; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { font-size: 12px; opacity: .85; }
 
-  main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 672px; margin: -40px auto 0; position: relative; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 720px; margin: -38px auto 0; position: relative; }
+  .card { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
   .card h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
   .section-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 18px 4px 8px; text-transform: uppercase; letter-spacing: .02em; }
 
@@ -73,7 +82,7 @@
   nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: color-mix(in srgb, var(--card) 92%, transparent);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line);
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
-  nav.tabs .inner { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+  nav.tabs .inner { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
   nav.tabs button { border: 0; background: none; color: var(--muted); padding: 6px 2px; border-radius: 12px;
     display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 500; position: relative; }
   nav.tabs button.active { color: var(--brand); }
@@ -88,7 +97,7 @@
     border-radius: 14px; border: 0; font-weight: 600; background: var(--brand); color: var(--brand-ink);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 30%, transparent); transition: transform .08s; }
   .btn:active { transform: scale(.98); }
-  .btn.secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+  .btn.secondary { background: var(--card-2); color: var(--text); border: 1.5px solid var(--line); box-shadow: none; }
   .btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent); box-shadow: none; }
   .btn.sm { width: auto; min-height: 38px; padding: 0 14px; border-radius: 10px; font-size: 14px; }
   .btn:disabled { opacity: .5; }
@@ -96,7 +105,7 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .muted { color: var(--muted); font-size: 14px; }
   label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 500; }
-  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px;
+  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px;
     font: inherit; background: var(--input); color: var(--text); }
   input:focus { outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent); border-color: var(--brand); }
 
@@ -116,6 +125,7 @@
       linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat;
             mask: linear-gradient(#000 0 0) top left / 28px 28px no-repeat, linear-gradient(#000 0 0) top right / 28px 28px no-repeat,
       linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat; }
+  .guide { outline: 2px solid rgba(255,255,255,.85); outline-offset: -2px; }
   .guide span { position: absolute; top: -34px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; font-weight: 500; }
   img.preview { width: 100%; border-radius: 14px; display: block; background: #000; }
 
@@ -156,14 +166,16 @@
   .cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .cal-head h2 { flex: 1; margin: 0; font-size: 18px; }
   .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-2); display: grid; place-items: center; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .cal-dow { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); padding: 2px 0 6px; }
-  .cal-day { aspect-ratio: 1 / 1.08; border: 0; border-radius: 12px; background: transparent; padding: 4px 2px; position: relative;
+  .cal-day { width: 100%; min-width: 0; min-height: 56px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 4px 2px; position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; font-variant-numeric: tabular-nums; }
   .cal-day .n { font-size: 14.5px; font-weight: 500; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; }
+  .cal-day.out { background: transparent; border-style: dashed; opacity: .6; }
   .cal-day.out .n { color: var(--muted); opacity: .45; }
+  .cal-day.today { border-color: var(--brand); }
   .cal-day.today .n { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
-  .cal-day.sel { background: var(--brand-soft); }
+  .cal-day.sel { background: var(--brand-soft); border-color: var(--brand); border-width: 2px; }
   .cal-day .dots { display: flex; gap: 3px; }
   .cal-day .dot { width: 6px; height: 6px; border-radius: 50%; }
   .cal-day .cnt { position: absolute; top: 2px; right: 3px; font-size: 10px; font-weight: 700; color: var(--muted); }
@@ -199,13 +211,13 @@
   footer.foot a:hover { text-decoration: underline; }
 
   :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-  .btn, .icon-btn, .list-item, nav.tabs button, .theme-btn { transition: transform .08s, background-color .2s, border-color .2s, filter .2s; }
+  .btn, .icon-btn, .list-item, nav.tabs button, button.chip-h { transition: transform .08s, background-color .2s, border-color .2s, filter .2s; }
   @media (hover: hover) {
     .btn:hover { filter: brightness(1.06); }
     .btn.secondary:hover, .icon-btn:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); filter: none; }
     nav.tabs button:hover { color: var(--text); }
     .list-item:hover { background: var(--card-2); }
-    .theme-btn:hover { background: rgba(255,255,255,.26); }
+    button.chip-h:hover { background: rgba(255,255,255,.26); }
   }
   .list-item { margin: 0 -10px; padding-left: 10px !important; padding-right: 10px !important; border-radius: 14px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -239,8 +251,14 @@
     <div class="brandrow">
       <div class="logo"><svg class="i"><use href="#i-box"/></svg></div>
       <div><h1>AI OCR วันหมดอายุ</h1><div class="sub">สแกน · ตรวจ · แจ้งเตือน</div></div>
-      <span class="chip-h" id="health"><i></i><span>กำลังเชื่อมต่อ…</span></span>
-      <button class="theme-btn" id="themeBtn" aria-label="สลับธีม" title="สลับธีม"><svg class="i"><use href="#i-auto"/></svg></button>
+      <button class="chip-h" id="themeBtn" aria-label="เปลี่ยนธีม">🎨 ธีม</button>
+    </div>
+    <div class="theme-panel hidden" id="themePanel">
+      <div class="t">โหมด</div>
+      <div class="seg" id="modeSeg"><button data-mode="auto">อัตโนมัติ</button><button data-mode="light">☀️ สว่าง</button><button data-mode="dark">🌙 มืด</button></div>
+      <div class="t">สีธีม</div>
+      <div class="swatches" id="accentSw"></div>
+      <div class="muted" style="font-size:12.5px">เครื่องอ่าน: <span id="health">กำลังเชื่อมต่อ…</span></div>
     </div>
     <div class="stats">
       <div class="stat"><b id="s-total">–</b><span>สแกนทั้งหมด</span></div>
@@ -272,11 +290,21 @@
         <button class="btn" id="openCam" style="margin-top:12px"><svg class="i"><use href="#i-cam"/></svg>เปิดกล้องถ่ายวันหมดอายุ</button>
         <div class="grid2" style="margin-top:10px">
           <label class="btn secondary" style="margin:0;color:var(--text);font-size:15px"><svg class="i"><use href="#i-img"/></svg>เลือกรูป
-            <input id="fileInput" type="file" accept="image/*" capture="environment" class="hidden">
+            <input id="fileInput" type="file" accept="image/*" class="hidden">
           </label>
           <button class="btn secondary" id="sampleBtn" style="font-size:15px"><svg class="i"><use href="#i-flask"/></svg>ภาพตัวอย่าง</button>
         </div>
+        <button class="btn secondary" id="manualBtn" style="margin-top:10px;font-size:15px">✍️ กรอกวันหมดอายุเอง (ไม่ต้องถ่ายรูป)</button>
       </div>
+    </div>
+    <div id="manualCard" class="card hidden">
+      <h2>✍️ กรอกวันหมดอายุเอง</h2>
+      <label>ชื่อสินค้า</label><input id="m-name" placeholder="เช่น นมกล่อง 200 มล." maxlength="200">
+      <label>วันหมดอายุ (EXP) *</label><input id="m-exp" type="date">
+      <label>วันผลิต (MFG)</label><input id="m-mfg" type="date">
+      <label>Lot Number</label><input id="m-lot" placeholder="เช่น A2506B" autocapitalize="characters">
+      <label>ชื่อผู้บันทึก *</label><input id="m-user" placeholder="เช่น qa_somchai">
+      <div class="row" style="margin-top:14px"><button class="btn secondary" id="m-cancel">ยกเลิก</button><button class="btn" id="m-save">บันทึก</button></div>
     </div>
     <div id="quality" class="card hidden"></div>
     <div id="result"></div>
@@ -329,6 +357,7 @@
       <h2><svg class="i"><use href="#i-bell"/></svg>แจ้งเตือนวันหมดอายุ</h2>
       <p class="muted" style="margin:0 0 12px">ระบบตรวจทุกชั่วโมง แจ้งเมื่อสินค้าใกล้หมดอายุ (ภายใน <span id="adays">7</span> วัน) หมดวันนี้ หรือหมดอายุแล้ว</p>
       <button class="btn secondary" id="notifBtn"><svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้</button>
+      <div class="notice hidden" id="notifHelp"></div>
     </div>
     <div class="card"><div id="alertList" class="muted">กำลังโหลด…</div></div>
   </section>
@@ -377,28 +406,35 @@ function thaiDate(s) { if (!s) return "-"; const [y, m, d] = s.split("-").map(Nu
 function empty(e, text) { return `<div class="empty"><span class="e">${e}</span>${text}</div>`; }
 const loading = (t) => `<div class="loading"><div class="spinner"></div><div>${t}</div></div>`;
 
-// ---------- theme (auto → light → dark) จำไว้ในเครื่อง
-const THEMES = ["auto", "light", "dark"], THEME_ICON = { auto: "i-auto", light: "i-sun", dark: "i-moon" },
-  THEME_TH = { auto: "ธีม: ตามเครื่อง", light: "ธีม: สว่าง", dark: "ธีม: มืด" };
-function applyTheme(t) {
-  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = t;
-  $("#themeBtn use").setAttribute("href", "#" + THEME_ICON[t]); $("#themeBtn").title = THEME_TH[t];
-  const dark = t === "dark" || (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelector('meta[name="theme-color"]').content = dark ? "#0f4f49" : "#0f9488";
+// ---------- ธีม (โหมดมืด/สว่าง + สีหลัก) จำไว้ในเครื่อง
+const ACCENTS = { teal: "#0d9488", blue: "#2563eb", purple: "#7c3aed", pink: "#db2777", orange: "#ea580c", green: "#16a34a" };
+function pref(k, d) { try { return localStorage.getItem(k) || d; } catch { return d; } }
+function setPref(k, v) { try { localStorage.setItem(k, v); } catch {} }
+function applyTheme() {
+  const mode = pref("theme", "auto"), accent = pref("accent", "teal"), root = document.documentElement;
+  if (mode === "auto") root.removeAttribute("data-theme"); else root.dataset.theme = mode;
+  root.dataset.accent = ACCENTS[accent] ? accent : "teal";
+  document.querySelector('meta[name="theme-color"]').content = ACCENTS[accent] || ACCENTS.teal;
+  $("#modeSeg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+  $("#accentSw").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.accent === accent));
 }
-let theme = "auto"; try { theme = localStorage.getItem("theme") || "auto"; } catch {}
-applyTheme(theme);
-$("#themeBtn").onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; applyTheme(theme);
-  try { localStorage.setItem("theme", theme); } catch {} toast(THEME_TH[theme], 1400); };
+$("#accentSw").innerHTML = Object.entries(ACCENTS).map(([k, c]) => `<button data-accent="${k}" style="background:${c}" aria-label="${k}"></button>`).join("");
+$("#modeSeg").querySelectorAll("button").forEach((b) => b.onclick = () => { setPref("theme", b.dataset.mode); applyTheme(); });
+$("#accentSw").querySelectorAll("button").forEach((b) => b.onclick = () => { setPref("accent", b.dataset.accent); applyTheme(); });
+$("#themeBtn").onclick = (e) => { e.stopPropagation(); $("#themePanel").classList.toggle("hidden"); };
+$("#themePanel").onclick = (e) => e.stopPropagation();
+document.addEventListener("click", () => $("#themePanel").classList.add("hidden"));
+applyTheme();
 
 // ---------- tabs
 document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
 function showTab(name) {
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   TABS.forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
-  if (name === "queue") loadQueue();
-  if (name === "history") loadHistory();
-  if (name === "alerts") loadAlerts();
+  const offline = (id) => () => { $(id).innerHTML = empty("📡", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); };
+  if (name === "queue") loadQueue().catch(offline("#queueList"));
+  if (name === "history") loadHistory().catch(offline("#historyList"));
+  if (name === "alerts") loadAlerts().catch(offline("#alertList"));
   if (name === "calendar") loadCalendar();
   window.scrollTo({ top: 0 });
 }
@@ -432,7 +468,42 @@ $("#sampleBtn").onclick = async () => {
     $("#quality").classList.remove("hidden"); upload(blob, name);
   } catch (e) { toast("โหลดภาพตัวอย่างไม่ได้"); }
 };
-$("#fileInput").onchange = (e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
+// ---------- กรอกเอง (ไม่มีภาพ / ไม่ผ่าน OCR)
+$("#manualBtn").onclick = () => {
+  $("#manualCard").classList.remove("hidden"); $("#m-user").value = $("#m-user").value || reviewerName();
+  $("#manualCard").scrollIntoView({ behavior: "smooth", block: "start" }); $("#m-exp").focus();
+};
+$("#m-cancel").onclick = () => $("#manualCard").classList.add("hidden");
+$("#m-save").onclick = () => saveManual(false);
+async function saveManual(force) {
+  const user = $("#m-user").value.trim(), exp = $("#m-exp").value;
+  if (!exp) return toast("กรุณาใส่วันหมดอายุ");
+  if (!user) return toast("กรุณาใส่ชื่อผู้บันทึก");
+  saveReviewer(user);
+  const body = { user, exp_date: exp, mfg_date: $("#m-mfg").value || null, lot_number: $("#m-lot").value.trim() || null,
+    product_name: $("#m-name").value.trim() || null, force };
+  const btn = $("#m-save"); if (btn.disabled) return; btn.disabled = true;   // กันกดซ้ำแล้วได้รายการซ้ำ
+  let r, res;
+  try {
+    r = await fetch(API + "/documents/manual", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    res = await r.json();
+  } catch { return toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); }
+  finally { btn.disabled = false; }
+  if (r.status === 422 && res.detail?.details?.length) {
+    const msg = res.detail.details.map((d) => "• " + d.message).join("\n");
+    if (confirm("ค่ายังไม่ผ่านกฎธุรกิจ:\n" + msg + "\n\nยืนยันบันทึกค่านี้หรือไม่?")) return saveManual(true);
+    return;
+  }
+  if (!r.ok) return toast(res.detail?.message || (typeof res.detail === "string" ? res.detail : "บันทึกไม่สำเร็จ"));
+  ["#m-name", "#m-exp", "#m-mfg", "#m-lot"].forEach((s) => ($(s).value = ""));
+  $("#manualCard").classList.add("hidden"); toast("บันทึกแล้ว ✓");
+  renderResult(res, $("#result")); refreshCount();
+  $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+const NOIMG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#2a2f3a"/><text x="28" y="37" font-size="26" text-anchor="middle">✍️</text></svg>');
+function thumb(id, manual) { return `<img loading="lazy" src="${manual ? NOIMG : `${API}/documents/${id}/image?variant=original`}" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
+
+$("#fileInput").onchange =(e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
 
 // ---------- ตรวจคุณภาพภาพบนมือถือก่อนส่ง (ความคมชัด) + ย่อขนาดเพื่อส่งเร็ว
 async function loadBitmap(blob) {
@@ -466,7 +537,9 @@ async function prepare(blob) {
 
 async function handleImage(blob, name) {
   const q = $("#quality"); q.classList.remove("hidden"); q.innerHTML = loading("กำลังตรวจคุณภาพภาพ…");
-  const p = await prepare(blob);
+  let p;
+  // เบราว์เซอร์เปิดบางไฟล์ไม่ได้ (เช่น HEIC) ก็ยังส่งให้เซิร์ฟเวอร์ลองอ่านได้
+  try { p = await prepare(blob); } catch { return upload(blob, name); }
   if (p.sharp < 60) {
     q.innerHTML = `<div class="notice" style="margin:0"><b>⚠️ ภาพอาจเบลอ (ความคม ${p.sharp.toFixed(0)})</b>ภาพเบลอทำให้อ่านผิดได้ แนะนำให้ถ่ายใหม่ให้ชัดขึ้น</div>
       <div class="row" style="margin-top:12px"><button class="btn secondary" id="retake">ถ่ายใหม่</button><button class="btn" id="sendAnyway">ส่งต่อเลย</button></div>`;
@@ -500,7 +573,7 @@ function confColor(c) { return c >= THRESHOLD ? "var(--ok)" : c >= 0.7 ? "var(--
 
 function renderResult(doc, el) {
   const [st, cls] = STATUS_TH[doc.status] || [doc.status, "b-warn"];
-  const pending = doc.status === "PENDING_REVIEW";
+  const pending = doc.status === "PENDING_REVIEW", manual = doc.engine === "manual";
   const names = ["exp_date", "mfg_date", "lot_number"];
   const fieldsHtml = names.map((n) => {
     const f = doc.fields[n]; const val = f ? (f.value ?? f.predicted_value) : null; const c = f ? f.confidence : 0;
@@ -509,18 +582,19 @@ function renderResult(doc, el) {
       ? `<input data-field="${n}" value="${esc(val || "")}" placeholder="เช่น A2506B" autocapitalize="characters">`
       : `<input data-field="${n}" type="date" value="${esc(val || "")}">`;
     return `<div class="field"><div class="top"><div class="name">${FIELD_TH[n]}</div>
-      ${f ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
-      <div class="val">${val ? esc(shown) : '<span class="muted">ไม่พบ</span>'}</div>
+      ${f && !manual ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
+      <div class="val">${val ? esc(shown) : `<span class="muted">${manual ? "ไม่ได้กรอก" : "ไม่พบ"}</span>`}</div>
       ${f && f.predicted_raw ? `<div class="muted">AI อ่านได้: “${esc(f.predicted_raw)}”</div>` : ""}
-      ${f ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
+      ${f && !manual ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
       ${pending ? `<label>แก้ไข (ถ้าค่าผิด)</label>${input}` : ""}</div>`;
   }).join("");
   const reasons = (doc.route_reasons || []).map((r) => `<li>${esc(reasonTh(r, doc.rules))}</li>`).join("");
   const warns = (doc.rules || []).filter((r) => !r.passed && r.severity === "warning").map((r) => `<li>${esc(r.message)}</li>`).join("");
   el.innerHTML = `<div class="card">
       <div class="row" style="align-items:center;margin-bottom:12px"><div><span class="badge ${cls}">${st}</span></div>
-      <div class="muted" style="text-align:right">#${doc.document_id} · ${(doc.processing_ms / 1000).toFixed(1)} วิ</div></div>
-      <img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">
+      <div class="muted" style="text-align:right">#${doc.document_id} · ${manual ? "กรอกเอง" : (doc.processing_ms / 1000).toFixed(1) + " วิ"}</div></div>
+      ${manual ? `<div class="val" style="margin-bottom:10px">✍️ ${esc(doc.filename)}</div>`
+        : `<img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">`}
       ${expiryBanner(doc.expiry)}
       ${reasons ? `<div class="notice"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
       ${warns ? `<div class="notice bad"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
@@ -564,7 +638,8 @@ async function rejectDoc(doc, el) {
   if (!reason) return;
   const r = await fetch(`${API}/review/${doc.document_id}/reject`, { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ reviewer, reason }) });
-  if (r.ok) { renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+  if (r.ok) { saveReviewer(reviewer); renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+  else toast("ปฏิเสธไม่สำเร็จ");
 }
 
 // ---------- สถานะวันหมดอายุ
@@ -582,9 +657,9 @@ function expiryBanner(e) {
 }
 function docRow(a, right = "") {
   const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
-  return `<div class="list-item" data-id="${a.document_id}"><img loading="lazy" src="${API}/documents/${a.document_id}/image?variant=original" alt="">
+  return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id, a.engine === "manual")}
     <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
-    <div class="muted">Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
+    <div class="muted">${a.engine === "manual" ? esc(a.filename) + " · " : ""}Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
     <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
 }
 
@@ -666,11 +741,31 @@ async function pollAlerts() {
     seenAlerts = ids;
   } catch {}
 }
-$("#notifBtn").onclick = async () => {
-  if (!("Notification" in window)) return toast("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
-  const p = await Notification.requestPermission();
-  toast(p === "granted" ? "เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)" : "ไม่ได้รับอนุญาตให้แจ้งเตือน");
+// เบราว์เซอร์ให้ขอสิทธิ์แจ้งเตือนได้เฉพาะ HTTPS หรือ localhost และถ้าเคยกด "บล็อก" ไว้ ต้องปลดบล็อกเองที่แถบที่อยู่
+const NOTIF_HELP = {
+  insecure: "<b>เปิดการแจ้งเตือนผ่านลิงก์ http://ไอพี ไม่ได้</b>เบราว์เซอร์อนุญาตเฉพาะ HTTPS หรือ localhost — บนคอมให้เปิดผ่าน http://localhost:8000 ส่วนมือถือต้องใช้ลิงก์ HTTPS (เช่นเวอร์ชันที่ deploy ขึ้นเว็บ)",
+  denied: "<b>เบราว์เซอร์บล็อกการแจ้งเตือนของเว็บนี้ไว้</b>วิธีปลดบล็อก: กดไอคอน ⓘ หรือ 🔒 หน้าช่องที่อยู่เว็บ → การแจ้งเตือน (Notifications) → เลือก \"อนุญาต\" แล้วรีเฟรชหน้านี้ (มือถือ: ⋮ → การตั้งค่า → การตั้งค่าเว็บไซต์ → การแจ้งเตือน)",
+  unsupported: "<b>เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน</b>ลองใช้ Chrome หรือ Edge (iPhone ต้อง \"เพิ่มไปยังหน้าจอโฮม\" ก่อน)",
 };
+function notifState() {
+  if (!window.isSecureContext) return "insecure";
+  if (!("Notification" in window)) return "unsupported";
+  return Notification.permission;   // default | granted | denied
+}
+function renderNotif() {
+  const s = notifState(), b = $("#notifBtn"), help = $("#notifHelp");
+  b.innerHTML = s === "granted" ? "✅ เปิดการแจ้งเตือนบนเครื่องนี้แล้ว" : `<svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้`;
+  b.disabled = s === "granted";
+  help.innerHTML = NOTIF_HELP[s] || ""; help.classList.toggle("hidden", !NOTIF_HELP[s]);
+}
+$("#notifBtn").onclick = async () => {
+  if (notifState() === "default") {
+    const p = await Notification.requestPermission();
+    if (p === "granted") { toast("เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)"); new Notification("✅ เปิดการแจ้งเตือนแล้ว", { body: "จะแจ้งเมื่อมีสินค้าใกล้หมดอายุ" }); }
+  }
+  renderNotif();
+};
+renderNotif();
 setInterval(pollAlerts, 60000);
 
 // ---------- queue / history
@@ -678,13 +773,15 @@ function itemHtml(d) {
   const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
   const v = exp ? (exp.value ?? exp.predicted_value) : null;
   return `<div class="list-item" data-id="${d.document_id}">
-    <img loading="lazy" src="${API}/documents/${d.document_id}/image?variant=original" alt="">
+    ${thumb(d.document_id, d.engine === "manual")}
     <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
-    <div class="muted">#${d.document_id} · มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%</div></div>
+    <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div></div>
     <span class="badge ${cls}">${st}</span></div>`;
 }
 async function openDoc(id) {
-  const d = await (await fetch(`${API}/documents/${id}`)).json(); showTab("scan"); renderResult(d, $("#result"));
+  const r = await fetch(`${API}/documents/${id}`).catch(() => null);
+  if (!r?.ok) return toast("เปิดรายการนี้ไม่ได้");
+  const d = await r.json(); showTab("scan"); renderResult(d, $("#result"));
   $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function bindItems(container) { container.querySelectorAll(".list-item").forEach((x) => x.onclick = () => openDoc(x.dataset.id)); }
@@ -710,8 +807,8 @@ async function refreshCount() {
   } catch {}
   pollAlerts();
 }
-fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health span").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
-  .catch(() => { $("#health span").textContent = "ออฟไลน์"; $("#health").classList.add("off"); });
+fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
+  .catch(() => { $("#health").textContent = "ออฟไลน์";  });
 refreshCount();
 </script>
 </body>
