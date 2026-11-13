@@ -1,0 +1,112 @@
+[
+  {
+    "image": "images/real_006.jpg",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2021-03-04",
+      "mfg_date": null,
+      "lot_number": null,
+      "exp_text": "MAR 04 2021",
+      "mfg_text": null,
+      "lot_text": null
+    },
+    "pred": {},
+    "reasons": [
+      "RULE_FAIL:R01:required_exp:exp_date"
+    ]
+  },
+  {
+    "image": "images/real_011.jpg",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2022-01-12",
+      "mfg_date": "2021-01-13",
+      "lot_number": null,
+      "exp_text": "22.01.12",
+      "mfg_text": "21.01.13",
+      "lot_text": null
+    },
+    "pred": {},
+    "reasons": [
+      "RULE_FAIL:R01:required_exp:exp_date"
+    ]
+  },
+  {
+    "image": "images/real_013.jpg",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2021-03-03",
+      "mfg_date": null,
+      "lot_number": "651",
+      "exp_text": "03/03/21",
+      "mfg_text": null,
+      "lot_text": "651"
+    },
+    "pred": {
+      "exp_date": "0321-03-31",
+      "lot_number": "651"
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "ENSEMBLE_DISAGREE:exp_date agreement=33%",
+      "LOW_CONFIDENCE:lot_number=77.23% < 90%",
+      "RULE_FAIL:R03:digit_range:exp_date"
+    ]
+  },
+  {
+    "image": "images/real_018.jpg",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2021-03-09",
+      "mfg_date": null,
+      "lot_number": null,
+      "exp_text": "2021.03.09",
+      "mfg_text": null,
+      "lot_text": null
+    },
+    "pred": {},
+    "reasons": [
+      "RULE_FAIL:R01:required_exp:exp_date"
+    ]
+  },
+  {
+    "image": "images/real_021.jpg",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2021-04-18",
+      "mfg_date": null,
+      "lot_number": null,
+      "exp_text": "18/04/2021",
+      "mfg_text": null,
+      "lot_text": null
+    },
+    "pred": {
+      "exp_date": null,
+      "mfg_date": null
+    },
+    "reasons": [
+      "LOW_CONFIDENCE:exp_date=77.23% < 90%",
+      "LOW_CONFIDENCE:mfg_date=77.23% < 90%",
+      "RULE_FAIL:R02:date_format:exp_date",
+      "RULE_FAIL:R02:date_format:mfg_date"
+    ]
+  },
+  {
+    "image": "images/real_030.jpg",
+    "status": "PENDING_REVIEW",
+    "gt": {
+      "exp_date": "2021-03-11",
+      "mfg_date": "2019-03-11",
+      "lot_number": null,
+      "exp_text": "11.03.2021",
+      "mfg_text": "11.03.2019",
+      "lot_text": null
+    },
+    "pred": {
+      "exp_date": "2021-03-11"
+    },
+    "reasons": [
+      "NO_LABEL:exp_date"
+    ]
+  }
+]

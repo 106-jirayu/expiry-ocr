@@ -76,7 +76,10 @@ def to_bgr(image: np.ndarray) -> np.ndarray:
 
 def decode_image(data: bytes) -> np.ndarray:
     arr = np.frombuffer(data, dtype=np.uint8)
-    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    try:
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    except cv2.error:   # เกิน OPENCV_IO_MAX_IMAGE_PIXELS (ดู app/__init__.py)
+        raise ValueError("ภาพมีความละเอียดสูงเกินไป (เกิน 50 ล้านพิกเซล)") from None
     if img is None:
         raise ValueError("ไม่สามารถอ่านไฟล์ภาพได้ (รองรับ JPG/PNG/BMP/WebP)")
     return img

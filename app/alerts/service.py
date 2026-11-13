@@ -65,7 +65,7 @@ def _message(doc: Document, kind: AlertKind, exp: date, today: date) -> str:
     when = (f"หมดอายุไปแล้ว {-days} วัน" if days < 0 else "หมดอายุวันนี้" if days == 0 else f"เหลืออีก {days} วัน")
     lines = [f"วันหมดอายุ: {exp.strftime('%d/%m/%Y')} ({when})",
              f"Lot: {lot.final_value if lot and lot.final_value else '-'}",
-             f"เอกสาร #{doc.id} · ไฟล์ {doc.filename}"]
+             f"เอกสาร #{doc.id} · {'สินค้า' if doc.engine == 'manual' else 'ไฟล์'} {doc.filename}"]
     return "\n".join(lines)
 
 
@@ -118,6 +118,7 @@ def acknowledge(session: Session, alert_id: int, user: str) -> ExpiryAlert | Non
 
 def alert_json(a: ExpiryAlert) -> dict:
     return {"id": a.id, "document_id": a.document_id, "kind": a.kind.value, "title": TITLE[a.kind],
+            "filename": a.document.filename, "engine": a.document.engine,
             "exp_date": a.exp_date, "days_left": (date.fromisoformat(a.exp_date) - date.today()).days,
             "lot_number": a.lot_number, "message": a.message, "channels_sent": a.channels_sent,
             "acknowledged": a.acknowledged, "acknowledged_by": a.acknowledged_by,
@@ -143,5 +144,5 @@ def calendar(session: Session, start: date, end: date, today: date | None = None
         out.append({"document_id": doc.id, "exp_date": exp.isoformat(), "days_left": (exp - today).days,
                     "status": kind.value if kind else "OK", "doc_status": doc.status.value,
                     "lot_number": lot.final_value if lot else None, "mfg_date": mfg.final_value if mfg else None,
-                    "filename": doc.filename})
+                    "filename": doc.filename, "engine": doc.engine})
     return out

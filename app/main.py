@@ -76,9 +76,20 @@ def health():
 
 @app.get("/", include_in_schema=False)
 def mobile_page():
-    return FileResponse(WEB_DIR / "index.html")
+    # ให้เบราว์เซอร์ถามเซิร์ฟเวอร์ทุกครั้ง ไม่เช่นนั้นจะเห็นหน้าเก่าหลังอัปเดตแอป
+    return FileResponse(WEB_DIR / "index.html", headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/manifest.webmanifest", include_in_schema=False)
 def manifest():
     return FileResponse(WEB_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/icon.svg", include_in_schema=False)
+def icon():
+    return FileResponse(WEB_DIR / "icon.svg", media_type="image/svg+xml")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(WEB_DIR / "icon.svg", media_type="image/svg+xml")

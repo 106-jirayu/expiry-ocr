@@ -2,11 +2,18 @@
 # ตั้งค่าครั้งเดียว: GitHub repo -> Settings -> Secrets and variables -> Actions
 #   Secret   HF_TOKEN  = token จาก https://huggingface.co/settings/tokens (สิทธิ์ write)
 #   Variable HF_SPACE  = <ชื่อผู้ใช้ HF>/<ชื่อ Space>  เช่น jirayu/expiry-ocr
+#
+# ใช้ huggingface_hub อัปโหลดแทน git push เพราะ HF ไม่รับไฟล์ภาพ/ไบนารีผ่าน git ธรรมดา
+# และตัดไฟล์ที่ไม่ต้องใช้ตอนรัน (ภาพประกอบ README, ชุดทดสอบ, รายงาน) ออกเพื่อให้ build เร็ว
 name: Deploy to Hugging Face Spaces
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: deploy-hf-space
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -14,16 +21,41 @@ jobs:
     if: ${{ vars.HF_SPACE != '' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Push to Space
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check token
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::ยังไม่ได้ตั้ง Secret HF_TOKEN (Settings -> Secrets and variables -> Actions)"
+            exit 1
+          fi
+      - name: Prepare Space README
+        run: cat deploy/hf_space_header.md README.md > README.hf.md && mv README.hf.md README.md
+      - name: Upload to Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE: ${{ vars.HF_SPACE }}
         run: |
-          cat deploy/hf_space_header.md README.md > README.hf.md && mv README.hf.md README.md
-          rm -rf .git
-          git init -b main
-          git config user.email "actions@github.com"
-          git config user.name "github-actions"
-          git add -A
-          git commit -m "Deploy from GitHub ${GITHUB_SHA::7}"
-          git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main
+          pip install -q "huggingface_hub>=0.25"
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          space = os.environ["HF_SPACE"]
+          api.create_repo(space, repo_type="space", space_sdk="docker", exist_ok=True)
+          api.upload_folder(
+              folder_path=".",
+              repo_id=space,
+              repo_type="space",
+              commit_message=f"Deploy from GitHub {os.environ['GITHUB_SHA'][:7]}",
+              ignore_patterns=[".git/*", ".github/*", "docs/*", "reports/*", "tests/*",
+                               "evaluation/*/images/*", "data/*", "*.png", "*.jpg", "*.jpeg",
+                               "*.zip", "*.pdf"],
+              delete_patterns=["*"],
+          )
+          print(f"Deployed -> https://huggingface.co/spaces/{space}")
+          PY

@@ -42,6 +42,8 @@ def conf_badge(c: float, th: float = 0.9) -> str:
 
 
 def reason_th(r: str, rules: list[dict]) -> str:
+    if r == "NO_LABEL:exp_date":
+        return "ไม่พบคำว่า EXP/BB/หมดอายุ กำกับวันที่ — ระบบเดาว่าเป็นวันหมดอายุ (อาจเป็นวันผลิต)"
     if r.startswith("LOW_CONFIDENCE:"):
         f, v = r[15:].split("=", 1)
         return f"ความมั่นใจต่ำ — {FIELD_TH.get(f, f)} {v}"
@@ -49,7 +51,7 @@ def reason_th(r: str, rules: list[dict]) -> str:
         return f"อ่านหลายรอบไม่ตรงกัน — {FIELD_TH.get(r[18:].split()[0], r)}"
     if r.startswith("RULE_FAIL:"):
         rid, _, f = r[10:].split(":")
-        msg = next((x["message"] for x in rules if x["rule_id"] == rid and x["field"] == f and not x["passed"]), f)
+        msg = next((x["message"] for x in rules if x["rule_id"] == rid and str(x["field"]) == f and not x["passed"]), f)
         return f"ไม่ผ่านกฎ {rid} — {msg}"
     return r
 

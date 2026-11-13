@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -22,6 +23,7 @@ from app.recognition.detector import crop_polygon
 from app.rules.validators import validate
 
 REVIEWED = (DocumentStatus.HUMAN_APPROVED, DocumentStatus.HUMAN_CORRECTED, DocumentStatus.REJECTED)
+MANUAL_ENGINE = "manual"
 
 
 class ReviewError(Exception):
@@ -81,6 +83,52 @@ def ingest(session: Session, raw: bytes, filename: str, pipeline: ExpiryOCRPipel
     if auto and settings.alerts_enabled:
         alerts.check_document(session, doc)
     return doc, result
+
+
+def create_manual(session: Session, user: str, values: dict[str, str | None], product_name: str | None = None,
+                  force: bool = False) -> Document:
+    """บันทึกวันหมดอายุที่ผู้ใช้กรอกเอง (ไม่มีภาพ / ไม่ผ่าน OCR) -> สถานะ HUMAN_APPROVED ทันที
+
+    ใช้กฎธุรกิจชุดเดียวกับการตรวจ ไม่ผ่านต้องส่ง force=True
+    """
+    if not user.strip():
+        raise ReviewError("ต้องระบุชื่อผู้บันทึก", status_code=422)
+    unknown = set(values) - set(FIELDS)
+    if unknown:
+        raise ReviewError(f"ไม่รู้จักฟิลด์: {sorted(unknown)}", status_code=422)
+    preds = {n: p for n, v in values.items() if (p := _as_prediction(n, v)) is not None}
+    if "exp_date" not in preds:
+        raise ReviewError("ต้องกรอกวันหมดอายุ (exp_date)", status_code=422)
+    rules = validate(preds, max_shelf_life_years=settings.max_shelf_life_years)
+    failed = [r.to_dict() for r in rules if not r.passed and r.severity == "error"]
+    if failed and not force:
+        raise ReviewError("ค่าที่กรอกยังไม่ผ่านกฎธุรกิจ (ส่ง force=true เพื่อยืนยัน)", failed, 422)
+
+    now = datetime.now(timezone.utc)
+    name = (product_name or "").strip() or "กรอกเอง"
+    digest = hashlib.sha256(f"manual|{user}|{name}|{sorted(values.items())}|{now.isoformat()}".encode()).hexdigest()
+    doc = Document(
+        filename=name, sha256=digest, original_path="", processed_path=None,
+        status=DocumentStatus.HUMAN_APPROVED, overall_confidence=1.0, engine=MANUAL_ENGINE,
+        route_reasons=[], rule_results=[r.to_dict() for r in rules], preprocessing={}, ocr_lines=[],
+        processing_ms=0.0, reviewed_by=user, reviewed_at=now,
+    )
+    for n in FIELDS:
+        p = preds.get(n)
+        if p is None:
+            continue
+        doc.fields.append(ExtractedField(name=n, predicted_raw=None, predicted_value=p.value, final_value=p.value,
+                                         confidence=1.0, date_format=p.date_format))
+        doc.audit_logs.append(AuditLog(field_name=n, action=AuditAction.EDIT, actor=user, original_value=None,
+                                       corrected_value=p.value, created_at=now, reason="กรอกเองโดยไม่ใช้ OCR"))
+    if failed:
+        doc.audit_logs.append(AuditLog(action=AuditAction.CONFIRM, actor=user, created_at=now,
+                                       reason="FORCE: ยืนยันแม้ไม่ผ่านกฎ " + ",".join(r["rule_id"] for r in failed)))
+    session.add(doc)
+    session.commit()
+    if settings.alerts_enabled:
+        alerts.check_document(session, doc)
+    return doc
 
 
 # ---------------------------------------------------------------- queries
@@ -224,7 +272,9 @@ def reject(session: Session, doc_id: int, reviewer: str, reason: str) -> Documen
 
 # ---------------------------------------------------------------- operational metrics
 def operational_metrics(session: Session) -> dict:
-    counts = dict(session.execute(select(Document.status, func.count()).group_by(Document.status)).all())
+    # รายการที่กรอกเองไม่ผ่าน OCR จึงไม่นับในตัวชี้วัดความแม่นยำ
+    scanned = Document.engine != MANUAL_ENGINE
+    counts = dict(session.execute(select(Document.status, func.count()).where(scanned).group_by(Document.status)).all())
     total = sum(counts.values())
     auto = counts.get(DocumentStatus.AUTO_APPROVED, 0)
     corrected = counts.get(DocumentStatus.HUMAN_CORRECTED, 0)
@@ -245,6 +295,7 @@ def operational_metrics(session: Session) -> dict:
         "human_correction_rate": round(corrected / (corrected + approved), 4) if corrected + approved else None,
         "field_correction_rate": round(error_fields / reviewed_fields, 4) if reviewed_fields else None,
         "per_field": per_field,
-        "avg_confidence": round(float(session.scalar(select(func.avg(Document.overall_confidence))) or 0), 4),
+        "avg_confidence": round(float(session.scalar(select(func.avg(Document.overall_confidence)).where(scanned)) or 0), 4),
+        "manual_entries": session.scalar(select(func.count()).select_from(Document).where(~scanned)) or 0,
     }
 

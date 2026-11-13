@@ -65,3 +65,47 @@ def test_reject_and_bad_upload():
     with TestClient(app) as c:
         assert c.post("/api/v1/documents", files={"file": ("x.png", b"not an image", "image/png")}).status_code == 400
         assert c.post("/api/v1/review/99999/reject", json={"reviewer": "a", "reason": "b"}).status_code == 404
+
+
+def test_manual_entry():
+    from datetime import date, timedelta
+    exp = (date.today() + timedelta(days=3)).isoformat()
+    with TestClient(app) as c:
+        r = c.post("/api/v1/documents/manual", json={"user": "qa1", "exp_date": exp, "lot_number": "a12",
+                                                      "product_name": "นมกล่อง"})
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["status"] == "HUMAN_APPROVED" and d["engine"] == "manual" and d["filename"] == "นมกล่อง"
+        assert d["fields"]["exp_date"]["value"] == exp and d["fields"]["lot_number"]["value"] == "A12"
+        assert d["expiry"]["status"] == "EXPIRING_SOON"
+        assert c.get(f"/api/v1/documents/{d['document_id']}/image").status_code == 404
+        cal = c.get(f"/api/v1/calendar?start={exp}&end={exp}").json()
+        assert d["document_id"] in {x["document_id"] for x in cal}
+
+        assert c.post("/api/v1/documents/manual", json={"user": "qa1", "exp_date": "31/12/2027"}).status_code == 422
+        bad = {"user": "qa1", "exp_date": "2000-01-01", "mfg_date": "2001-01-01"}
+        assert c.post("/api/v1/documents/manual", json=bad).status_code == 422
+        assert c.post("/api/v1/documents/manual", json={**bad, "force": True}).status_code == 200
+
+
+def test_thumbnail_is_small_jpeg(tmp_path: Path):
+    path, _ = _images(tmp_path, 1)[0]
+    with TestClient(app) as c:
+        doc = c.post("/api/v1/documents", files={"file": (path.name, path.read_bytes(), "image/png")}).json()
+        r = c.get(f"/api/v1/documents/{doc['document_id']}/image?variant=thumb")
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "image/jpeg"
+        assert "max-age" in r.headers.get("cache-control", "")
+        import cv2
+        import numpy as np
+        img = cv2.imdecode(np.frombuffer(r.content, np.uint8), cv2.IMREAD_COLOR)
+        assert max(img.shape[:2]) <= 240
+
+
+def test_huge_image_is_rejected_cleanly():
+    import cv2
+    import numpy as np
+    ok, buf = cv2.imencode(".png", np.zeros((8000, 8000, 3), np.uint8))   # 64 ล้านพิกเซล แต่ไฟล์เล็ก
+    with TestClient(app) as c:
+        r = c.post("/api/v1/documents", files={"file": ("bomb.png", buf.tobytes(), "image/png")})
+        assert r.status_code == 400

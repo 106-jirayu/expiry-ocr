@@ -3,48 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d9488">
+<meta name="theme-color" content="#0f9488">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<meta name="description" content="สแกนวันหมดอายุบนฉลากสินค้าด้วย AI ตรวจ แก้ และแจ้งเตือนก่อนหมดอายุ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>Expiry Date AI OCR</title>
 <style>
+  /* สีหลัก (เลือกได้จากปุ่ม 🎨): a1 เข้ม, a2 เข้มกว่า, a3 เข้มสุด, al สว่าง (ใช้ในโหมดมืด) */
+  :root, [data-accent="teal"] { --a1: #0d9488; --a2: #0f766e; --a3: #115e59; --al: #2dd4bf; }
+  [data-accent="blue"]   { --a1: #2563eb; --a2: #1d4ed8; --a3: #1e3a8a; --al: #60a5fa; }
+  [data-accent="purple"] { --a1: #7c3aed; --a2: #6d28d9; --a3: #4c1d95; --al: #a78bfa; }
+  [data-accent="pink"]   { --a1: #db2777; --a2: #be185d; --a3: #831843; --al: #f472b6; }
+  [data-accent="orange"] { --a1: #ea580c; --a2: #c2410c; --a3: #7c2d12; --al: #fb923c; }
+  [data-accent="green"]  { --a1: #16a34a; --a2: #15803d; --a3: #14532d; --al: #4ade80; }
   :root {
-    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #e5eaf0;
-    --brand: #0d9488; --brand-2: #0f766e; --brand-soft: #ccfbf1; --brand-ink: #ffffff;
+    color-scheme: light;
+    --bg: #f3f6f9; --card: #ffffff; --card-2: #f8fafc; --text: #0f172a; --muted: #64748b; --line: #cbd5e1;
+    --brand: var(--a1); --brand-2: var(--a2); --brand-soft: color-mix(in srgb, var(--a1) 16%, #fff); --brand-ink: #ffffff;
     --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7; --bad: #dc2626; --bad-bg: #fee2e2;
     --input: #ffffff; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
-    --hero: linear-gradient(135deg, #0d9488 0%, #0f766e 55%, #115e59 100%);
+    --hero: linear-gradient(135deg, var(--a1) 0%, var(--a2) 55%, var(--a3) 100%);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #1f2b40;
-      --brand: #2dd4bf; --brand-2: #14b8a6; --brand-soft: #0d3b38; --brand-ink: #032421;
+    :root:not([data-theme="light"]) { color-scheme: dark; --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
+      --brand: var(--al); --brand-2: var(--a1); --brand-soft: color-mix(in srgb, var(--al) 20%, #121a2a);
+      --brand-ink: color-mix(in srgb, var(--a3) 45%, #000);
       --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
       --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
-      --hero: linear-gradient(135deg, #115e59 0%, #134e4a 60%, #0f2f2d 100%); }
+      --hero: linear-gradient(135deg, var(--a3) 0%, color-mix(in srgb, var(--a3) 75%, #000) 60%, color-mix(in srgb, var(--a3) 45%, #000) 100%); }
   }
+  :root[data-theme="dark"] { color-scheme: dark; --bg: #0a0f1a; --card: #121a2a; --card-2: #0f1624; --text: #e6ebf2; --muted: #93a1b5; --line: #3a4a66;
+    --brand: var(--al); --brand-2: var(--a1); --brand-soft: color-mix(in srgb, var(--al) 20%, #121a2a);
+    --brand-ink: color-mix(in srgb, var(--a3) 45%, #000);
+    --ok: #4ade80; --ok-bg: #0f2e1d; --warn: #fbbf24; --warn-bg: #3a2a08; --bad: #f87171; --bad-bg: #3b1212;
+    --input: #0b1220; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    --hero: linear-gradient(135deg, var(--a3) 0%, color-mix(in srgb, var(--a3) 75%, #000) 60%, color-mix(in srgb, var(--a3) 45%, #000) 100%); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.55 "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    font: 16px/1.6 "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif; }
   button { font: inherit; color: inherit; cursor: pointer; }
   svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 
   /* ---------- header */
-  header { background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; }
+  header { position: relative; background: var(--hero); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 54px; border-radius: 0 0 28px 28px; }
   .hwrap { max-width: 720px; margin: 0 auto; }
   .brandrow { display: flex; align-items: center; gap: 12px; }
-  .logo { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.16); display: grid; place-items: center; }
+  .logo { width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); display: grid; place-items: center; }
   .brandrow h1 { font-size: 18px; margin: 0; font-weight: 700; line-height: 1.2; }
   .brandrow .sub { font-size: 12.5px; opacity: .85; }
   .chip-h { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+  button.chip-h { border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 13px; padding: 6px 12px; }
+  .theme-panel { position: absolute; right: 16px; top: calc(60px + env(safe-area-inset-top)); z-index: 30; width: 260px;
+    background: var(--card); color: var(--text); border: 1.5px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+  .theme-panel .t { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .seg button { border: 1.5px solid var(--line); background: var(--card-2); border-radius: 10px; padding: 6px 0; font-size: 13.5px; }
+  .seg button.on { border-color: var(--brand); background: var(--brand-soft); font-weight: 600; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; outline: 1.5px solid var(--line); }
+  .swatches button.on { border-color: var(--card); outline: 2.5px solid var(--text); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
-  .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 10px 12px; }
-  .stat b { display: block; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; padding: 10px 12px;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .stat b { display: block; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { font-size: 12px; opacity: .85; }
 
   main { padding: 0 16px calc(100px + env(safe-area-inset-bottom)); max-width: 720px; margin: -38px auto 0; position: relative; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
   .card h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
   .section-title { font-size: 13px; font-weight: 600; color: var(--muted); margin: 18px 4px 8px; text-transform: uppercase; letter-spacing: .02em; }
 
@@ -67,7 +97,7 @@
     border-radius: 14px; border: 0; font-weight: 600; background: var(--brand); color: var(--brand-ink);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 30%, transparent); transition: transform .08s; }
   .btn:active { transform: scale(.98); }
-  .btn.secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+  .btn.secondary { background: var(--card-2); color: var(--text); border: 1.5px solid var(--line); box-shadow: none; }
   .btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent); box-shadow: none; }
   .btn.sm { width: auto; min-height: 38px; padding: 0 14px; border-radius: 10px; font-size: 14px; }
   .btn:disabled { opacity: .5; }
@@ -75,7 +105,7 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .muted { color: var(--muted); font-size: 14px; }
   label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 500; }
-  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px;
+  input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px;
     font: inherit; background: var(--input); color: var(--text); }
   input:focus { outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent); border-color: var(--brand); }
 
@@ -95,6 +125,7 @@
       linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat;
             mask: linear-gradient(#000 0 0) top left / 28px 28px no-repeat, linear-gradient(#000 0 0) top right / 28px 28px no-repeat,
       linear-gradient(#000 0 0) bottom left / 28px 28px no-repeat, linear-gradient(#000 0 0) bottom right / 28px 28px no-repeat; }
+  .guide { outline: 2px solid rgba(255,255,255,.85); outline-offset: -2px; }
   .guide span { position: absolute; top: -34px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; font-weight: 500; }
   img.preview { width: 100%; border-radius: 14px; display: block; background: #000; }
 
@@ -117,6 +148,7 @@
   .field .pct { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 6px; }
   .bar i { display: block; height: 100%; border-radius: 3px; }
+  .list-item .why { font-size: 12.5px; color: var(--warn); margin-top: 2px; }
   ul.reasons { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
   .notice { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
   .notice.bad { background: var(--bad-bg); color: var(--bad); }
@@ -135,14 +167,16 @@
   .cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .cal-head h2 { flex: 1; margin: 0; font-size: 18px; }
   .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-2); display: grid; place-items: center; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .cal-dow { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); padding: 2px 0 6px; }
-  .cal-day { aspect-ratio: 1 / 1.08; border: 0; border-radius: 12px; background: transparent; padding: 4px 2px; position: relative;
+  .cal-day { width: 100%; min-width: 0; min-height: 56px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 4px 2px; position: relative;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; font-variant-numeric: tabular-nums; }
   .cal-day .n { font-size: 14.5px; font-weight: 500; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; }
+  .cal-day.out { background: transparent; border-style: dashed; opacity: .6; }
   .cal-day.out .n { color: var(--muted); opacity: .45; }
+  .cal-day.today { border-color: var(--brand); }
   .cal-day.today .n { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
-  .cal-day.sel { background: var(--brand-soft); }
+  .cal-day.sel { background: var(--brand-soft); border-color: var(--brand); border-width: 2px; }
   .cal-day .dots { display: flex; gap: 3px; }
   .cal-day .dot { width: 6px; height: 6px; border-radius: 50%; }
   .cal-day .cnt { position: absolute; top: 2px; right: 3px; font-size: 10px; font-weight: 700; color: var(--muted); }
@@ -163,6 +197,34 @@
     animation: spin .8s linear infinite; flex: 0 0 20px; } @keyframes spin { to { transform: rotate(360deg); } }
   .loading { display: flex; align-items: center; gap: 10px; }
   .hidden { display: none !important; }
+
+  /* ---------- how-it-works + footer */
+  .steps { display: grid; gap: 12px; margin: 4px 0 0; padding: 0; list-style: none; counter-reset: st; }
+  .steps li { display: flex; gap: 12px; align-items: flex-start; counter-increment: st; font-size: 14.5px; }
+  .steps li::before { content: counter(st); flex: 0 0 28px; height: 28px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 14px; }
+  .steps b { display: block; font-size: 15px; }
+  .demo-note { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--muted); padding: 12px 14px;
+    border-radius: 14px; background: var(--card-2); border: 1px dashed var(--line); margin-bottom: 14px; }
+  .demo-note svg.i { width: 18px; height: 18px; margin-top: 2px; color: var(--brand); }
+  footer.foot { text-align: center; font-size: 13px; color: var(--muted); padding: 6px 0 4px; }
+  footer.foot a { color: var(--brand); text-decoration: none; font-weight: 500; }
+  footer.foot a:hover { text-decoration: underline; }
+
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .btn, .icon-btn, .list-item, nav.tabs button, button.chip-h { transition: transform .08s, background-color .2s, border-color .2s, filter .2s; }
+  @media (hover: hover) {
+    .btn:hover { filter: brightness(1.06); }
+    .btn.secondary:hover, .icon-btn:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); filter: none; }
+    nav.tabs button:hover { color: var(--text); }
+    .list-item:hover { background: var(--card-2); }
+    button.chip-h:hover { background: rgba(255,255,255,.26); }
+  }
+  .list-item { margin: 0 -10px; padding-left: 10px !important; padding-right: 10px !important; border-radius: 14px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  @media (min-width: 720px) { header { border-radius: 0 0 36px 36px; } }
+  .brandrow h1 { white-space: nowrap; }
+  @media (max-width: 420px) { .chip-h span { display: none; } .chip-h { padding: 8px; } .brandrow h1 { font-size: 17px; } }
   section { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
@@ -178,6 +240,10 @@
   <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2M8.5 2h7M7 16h10"/></symbol>
   <symbol id="i-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
   <symbol id="i-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol>
 </svg>
 
@@ -186,7 +252,14 @@
     <div class="brandrow">
       <div class="logo"><svg class="i"><use href="#i-box"/></svg></div>
       <div><h1>AI OCR วันหมดอายุ</h1><div class="sub">สแกน · ตรวจ · แจ้งเตือน</div></div>
-      <span class="chip-h" id="health">กำลังเชื่อมต่อ…</span>
+      <button class="chip-h" id="themeBtn" aria-label="เปลี่ยนธีม">🎨 ธีม</button>
+    </div>
+    <div class="theme-panel hidden" id="themePanel">
+      <div class="t">โหมด</div>
+      <div class="seg" id="modeSeg"><button data-mode="auto">อัตโนมัติ</button><button data-mode="light">☀️ สว่าง</button><button data-mode="dark">🌙 มืด</button></div>
+      <div class="t">สีธีม</div>
+      <div class="swatches" id="accentSw"></div>
+      <div class="muted" style="font-size:12.5px">เครื่องอ่าน: <span id="health">กำลังเชื่อมต่อ…</span></div>
     </div>
     <div class="stats">
       <div class="stat"><b id="s-total">–</b><span>สแกนทั้งหมด</span></div>
@@ -218,14 +291,35 @@
         <button class="btn" id="openCam" style="margin-top:12px"><svg class="i"><use href="#i-cam"/></svg>เปิดกล้องถ่ายวันหมดอายุ</button>
         <div class="grid2" style="margin-top:10px">
           <label class="btn secondary" style="margin:0;color:var(--text);font-size:15px"><svg class="i"><use href="#i-img"/></svg>เลือกรูป
-            <input id="fileInput" type="file" accept="image/*" capture="environment" class="hidden">
+            <input id="fileInput" type="file" accept="image/*" class="hidden">
           </label>
           <button class="btn secondary" id="sampleBtn" style="font-size:15px"><svg class="i"><use href="#i-flask"/></svg>ภาพตัวอย่าง</button>
         </div>
+        <button class="btn secondary" id="manualBtn" style="margin-top:10px;font-size:15px">✍️ กรอกวันหมดอายุเอง (ไม่ต้องถ่ายรูป)</button>
       </div>
+    </div>
+    <div id="manualCard" class="card hidden">
+      <h2>✍️ กรอกวันหมดอายุเอง</h2>
+      <label>ชื่อสินค้า</label><input id="m-name" placeholder="เช่น นมกล่อง 200 มล." maxlength="200">
+      <label>วันหมดอายุ (EXP) *</label><input id="m-exp" type="date">
+      <label>วันผลิต (MFG)</label><input id="m-mfg" type="date">
+      <label>Lot Number</label><input id="m-lot" placeholder="เช่น A2506B" autocapitalize="characters">
+      <label>ชื่อผู้บันทึก *</label><input id="m-user" placeholder="เช่น qa_somchai">
+      <div class="row" style="margin-top:14px"><button class="btn secondary" id="m-cancel">ยกเลิก</button><button class="btn" id="m-save">บันทึก</button></div>
     </div>
     <div id="quality" class="card hidden"></div>
     <div id="result"></div>
+    <div class="card" id="howto">
+      <h2 style="margin-bottom:12px">ใช้งานง่าย ๆ 3 ขั้นตอน</h2>
+      <ol class="steps">
+        <li><div><b>ถ่ายหรือเลือกรูปฉลาก</b><span class="muted">ให้วันที่อยู่กลางภาพ ชัด ไม่เบลอ</span></div></li>
+        <li><div><b>AI อ่านวันหมดอายุให้</b><span class="muted">พร้อมบอกว่ามั่นใจกี่เปอร์เซ็นต์ และเหลืออีกกี่วัน</span></div></li>
+        <li><div><b>ตรวจ/แก้ถ้าจำเป็น</b><span class="muted">ภาพที่ไม่มั่นใจจะเข้าคิวตรวจ คำแก้ของคุณช่วยสอน AI</span></div></li>
+      </ol>
+    </div>
+    <div class="demo-note"><svg class="i"><use href="#i-info"/></svg>
+      <div>นี่คือเว็บสาธิตแบบสาธารณะ ภาพที่อัปโหลดทุกคนที่เปิดลิงก์นี้มองเห็นได้ และอาจถูกล้างเมื่อเซิร์ฟเวอร์รีสตาร์ท กรุณาอย่าอัปโหลดข้อมูลส่วนตัว</div></div>
+    <footer class="foot"><a href="/docs" target="_blank" rel="noopener">API docs</a> · <a href="https://github.com/106-jirayu/expiry-ocr" target="_blank" rel="noopener">ซอร์สโค้ดบน GitHub</a></footer>
   </section>
 
   <!-- ====== QUEUE ====== -->
@@ -264,6 +358,7 @@
       <h2><svg class="i"><use href="#i-bell"/></svg>แจ้งเตือนวันหมดอายุ</h2>
       <p class="muted" style="margin:0 0 12px">ระบบตรวจทุกชั่วโมง แจ้งเมื่อสินค้าใกล้หมดอายุ (ภายใน <span id="adays">7</span> วัน) หมดวันนี้ หรือหมดอายุแล้ว</p>
       <button class="btn secondary" id="notifBtn"><svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้</button>
+      <div class="notice hidden" id="notifHelp"></div>
     </div>
     <div class="card"><div id="alertList" class="muted">กำลังโหลด…</div></div>
   </section>
@@ -312,14 +407,35 @@ function thaiDate(s) { if (!s) return "-"; const [y, m, d] = s.split("-").map(Nu
 function empty(e, text) { return `<div class="empty"><span class="e">${e}</span>${text}</div>`; }
 const loading = (t) => `<div class="loading"><div class="spinner"></div><div>${t}</div></div>`;
 
+// ---------- ธีม (โหมดมืด/สว่าง + สีหลัก) จำไว้ในเครื่อง
+const ACCENTS = { teal: "#0d9488", blue: "#2563eb", purple: "#7c3aed", pink: "#db2777", orange: "#ea580c", green: "#16a34a" };
+function pref(k, d) { try { return localStorage.getItem(k) || d; } catch { return d; } }
+function setPref(k, v) { try { localStorage.setItem(k, v); } catch {} }
+function applyTheme() {
+  const mode = pref("theme", "auto"), accent = pref("accent", "teal"), root = document.documentElement;
+  if (mode === "auto") root.removeAttribute("data-theme"); else root.dataset.theme = mode;
+  root.dataset.accent = ACCENTS[accent] ? accent : "teal";
+  document.querySelector('meta[name="theme-color"]').content = ACCENTS[accent] || ACCENTS.teal;
+  $("#modeSeg").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+  $("#accentSw").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.accent === accent));
+}
+$("#accentSw").innerHTML = Object.entries(ACCENTS).map(([k, c]) => `<button data-accent="${k}" style="background:${c}" aria-label="${k}"></button>`).join("");
+$("#modeSeg").querySelectorAll("button").forEach((b) => b.onclick = () => { setPref("theme", b.dataset.mode); applyTheme(); });
+$("#accentSw").querySelectorAll("button").forEach((b) => b.onclick = () => { setPref("accent", b.dataset.accent); applyTheme(); });
+$("#themeBtn").onclick = (e) => { e.stopPropagation(); $("#themePanel").classList.toggle("hidden"); };
+$("#themePanel").onclick = (e) => e.stopPropagation();
+document.addEventListener("click", () => $("#themePanel").classList.add("hidden"));
+applyTheme();
+
 // ---------- tabs
 document.querySelectorAll("nav.tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
 function showTab(name) {
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   TABS.forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
-  if (name === "queue") loadQueue();
-  if (name === "history") loadHistory();
-  if (name === "alerts") loadAlerts();
+  const offline = (id) => () => { $(id).innerHTML = empty("📡", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); };
+  if (name === "queue") loadQueue().catch(offline("#queueList"));
+  if (name === "history") loadHistory().catch(offline("#historyList"));
+  if (name === "alerts") loadAlerts().catch(offline("#alertList"));
   if (name === "calendar") loadCalendar();
   window.scrollTo({ top: 0 });
 }
@@ -353,7 +469,42 @@ $("#sampleBtn").onclick = async () => {
     $("#quality").classList.remove("hidden"); upload(blob, name);
   } catch (e) { toast("โหลดภาพตัวอย่างไม่ได้"); }
 };
-$("#fileInput").onchange = (e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
+// ---------- กรอกเอง (ไม่มีภาพ / ไม่ผ่าน OCR)
+$("#manualBtn").onclick = () => {
+  $("#manualCard").classList.remove("hidden"); $("#m-user").value = $("#m-user").value || reviewerName();
+  $("#manualCard").scrollIntoView({ behavior: "smooth", block: "start" }); $("#m-exp").focus();
+};
+$("#m-cancel").onclick = () => $("#manualCard").classList.add("hidden");
+$("#m-save").onclick = () => saveManual(false);
+async function saveManual(force) {
+  const user = $("#m-user").value.trim(), exp = $("#m-exp").value;
+  if (!exp) return toast("กรุณาใส่วันหมดอายุ");
+  if (!user) return toast("กรุณาใส่ชื่อผู้บันทึก");
+  saveReviewer(user);
+  const body = { user, exp_date: exp, mfg_date: $("#m-mfg").value || null, lot_number: $("#m-lot").value.trim() || null,
+    product_name: $("#m-name").value.trim() || null, force };
+  const btn = $("#m-save"); if (btn.disabled) return; btn.disabled = true;   // กันกดซ้ำแล้วได้รายการซ้ำ
+  let r, res;
+  try {
+    r = await fetch(API + "/documents/manual", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    res = await r.json();
+  } catch { return toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); }
+  finally { btn.disabled = false; }
+  if (r.status === 422 && res.detail?.details?.length) {
+    const msg = res.detail.details.map((d) => "• " + d.message).join("\n");
+    if (confirm("ค่ายังไม่ผ่านกฎธุรกิจ:\n" + msg + "\n\nยืนยันบันทึกค่านี้หรือไม่?")) return saveManual(true);
+    return;
+  }
+  if (!r.ok) return toast(res.detail?.message || (typeof res.detail === "string" ? res.detail : "บันทึกไม่สำเร็จ"));
+  ["#m-name", "#m-exp", "#m-mfg", "#m-lot"].forEach((s) => ($(s).value = ""));
+  $("#manualCard").classList.add("hidden"); toast("บันทึกแล้ว ✓");
+  renderResult(res, $("#result")); refreshCount();
+  $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+const NOIMG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#2a2f3a"/><text x="28" y="37" font-size="26" text-anchor="middle">✍️</text></svg>');
+function thumb(id, manual) { return `<img loading="lazy" src="${manual ? NOIMG : `${API}/documents/${id}/image?variant=thumb`}" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
+
+$("#fileInput").onchange =(e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
 
 // ---------- ตรวจคุณภาพภาพบนมือถือก่อนส่ง (ความคมชัด) + ย่อขนาดเพื่อส่งเร็ว
 async function loadBitmap(blob) {
@@ -387,7 +538,9 @@ async function prepare(blob) {
 
 async function handleImage(blob, name) {
   const q = $("#quality"); q.classList.remove("hidden"); q.innerHTML = loading("กำลังตรวจคุณภาพภาพ…");
-  const p = await prepare(blob);
+  let p;
+  // เบราว์เซอร์เปิดบางไฟล์ไม่ได้ (เช่น HEIC) ก็ยังส่งให้เซิร์ฟเวอร์ลองอ่านได้
+  try { p = await prepare(blob); } catch { return upload(blob, name); }
   if (p.sharp < 60) {
     q.innerHTML = `<div class="notice" style="margin:0"><b>⚠️ ภาพอาจเบลอ (ความคม ${p.sharp.toFixed(0)})</b>ภาพเบลอทำให้อ่านผิดได้ แนะนำให้ถ่ายใหม่ให้ชัดขึ้น</div>
       <div class="row" style="margin-top:12px"><button class="btn secondary" id="retake">ถ่ายใหม่</button><button class="btn" id="sendAnyway">ส่งต่อเลย</button></div>`;
@@ -410,18 +563,31 @@ async function upload(blob, name) {
 }
 
 // ---------- แสดงผล + HITL review บนมือถือ
+const RULE_SHORT = { R01: "ไม่พบวันหมดอายุ", R02: "รูปแบบวันที่แปลก", R03: "ตัวเลขวันที่ผิดช่วง", R04: "ไม่มีวันนี้ในปฏิทิน",
+  R05: "EXP อยู่ก่อน MFG", R06: "วันผลิตอยู่ในอนาคต", R07: "อายุสินค้านานผิดปกติ", R08: "Lot ผิดรูปแบบ",
+  R10: "พบวันที่อื่นในภาพ", R11: "วันที่อ่านได้ 2 แบบ" };
+// เหตุผลสั้น ๆ 1 ข้อสำหรับแสดงในรายการคิว (เลือกข้อที่คนตรวจควรรู้ก่อน)
+function reasonShort(reasons) {
+  const rs = reasons || [], rule = rs.find((r) => r.startsWith("RULE_FAIL:"));
+  if (rule) return RULE_SHORT[rule.split(":")[1]] || "ไม่ผ่านกฎธุรกิจ";
+  if (rs.some((r) => r.startsWith("ENSEMBLE_DISAGREE:"))) return "อ่านหลายรอบได้ไม่ตรงกัน";
+  if (rs.includes("NO_LABEL:exp_date")) return "ไม่มีคำว่า EXP กำกับ";
+  if (rs.some((r) => r.startsWith("LOW_CONFIDENCE:"))) return "ภาพไม่ชัด ความมั่นใจต่ำ";
+  return "";
+}
 function reasonTh(r, rules) {
+  if (r === "NO_LABEL:exp_date") return "ไม่พบคำว่า EXP/BB/หมดอายุ กำกับวันที่ — ระบบเดาว่าเป็นวันหมดอายุ (อาจเป็นวันผลิต)";
   if (r.startsWith("LOW_CONFIDENCE:")) { const [f, v] = r.slice(15).split("="); return `ความมั่นใจต่ำ: ${FIELD_TH[f] || f} ${v.split(" ")[0]}`; }
   if (r.startsWith("ENSEMBLE_DISAGREE:")) { const f = r.slice(18).split(" ")[0]; return `อ่านหลายรอบได้ไม่ตรงกัน: ${FIELD_TH[f] || f}`; }
   if (r.startsWith("RULE_FAIL:")) { const [id, , f] = r.slice(10).split(":");
-    const rule = (rules || []).find((x) => x.rule_id === id && x.field === f && !x.passed); return `ไม่ผ่านกฎ ${id}: ${rule ? rule.message : f}`; }
+    const rule = (rules || []).find((x) => x.rule_id === id && String(x.field ?? "None") === f && !x.passed); return `ไม่ผ่านกฎ ${id}: ${rule ? rule.message : f}`; }
   return r;
 }
 function confColor(c) { return c >= THRESHOLD ? "var(--ok)" : c >= 0.7 ? "var(--warn)" : "var(--bad)"; }
 
 function renderResult(doc, el) {
   const [st, cls] = STATUS_TH[doc.status] || [doc.status, "b-warn"];
-  const pending = doc.status === "PENDING_REVIEW";
+  const pending = doc.status === "PENDING_REVIEW", manual = doc.engine === "manual";
   const names = ["exp_date", "mfg_date", "lot_number"];
   const fieldsHtml = names.map((n) => {
     const f = doc.fields[n]; const val = f ? (f.value ?? f.predicted_value) : null; const c = f ? f.confidence : 0;
@@ -430,18 +596,19 @@ function renderResult(doc, el) {
       ? `<input data-field="${n}" value="${esc(val || "")}" placeholder="เช่น A2506B" autocapitalize="characters">`
       : `<input data-field="${n}" type="date" value="${esc(val || "")}">`;
     return `<div class="field"><div class="top"><div class="name">${FIELD_TH[n]}</div>
-      ${f ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
-      <div class="val">${val ? esc(shown) : '<span class="muted">ไม่พบ</span>'}</div>
+      ${f && !manual ? `<div class="pct" style="color:${confColor(c)}">${(c * 100).toFixed(1)}%</div>` : ""}</div>
+      <div class="val">${val ? esc(shown) : `<span class="muted">${manual ? "ไม่ได้กรอก" : "ไม่พบ"}</span>`}</div>
       ${f && f.predicted_raw ? `<div class="muted">AI อ่านได้: “${esc(f.predicted_raw)}”</div>` : ""}
-      ${f ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
+      ${f && !manual ? `<div class="bar"><i style="width:${(c * 100).toFixed(0)}%;background:${confColor(c)}"></i></div>` : ""}
       ${pending ? `<label>แก้ไข (ถ้าค่าผิด)</label>${input}` : ""}</div>`;
   }).join("");
   const reasons = (doc.route_reasons || []).map((r) => `<li>${esc(reasonTh(r, doc.rules))}</li>`).join("");
   const warns = (doc.rules || []).filter((r) => !r.passed && r.severity === "warning").map((r) => `<li>${esc(r.message)}</li>`).join("");
   el.innerHTML = `<div class="card">
       <div class="row" style="align-items:center;margin-bottom:12px"><div><span class="badge ${cls}">${st}</span></div>
-      <div class="muted" style="text-align:right">#${doc.document_id} · ${(doc.processing_ms / 1000).toFixed(1)} วิ</div></div>
-      <img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">
+      <div class="muted" style="text-align:right">#${doc.document_id} · ${manual ? "กรอกเอง" : (doc.processing_ms / 1000).toFixed(1) + " วิ"}</div></div>
+      ${manual ? `<div class="val" style="margin-bottom:10px">✍️ ${esc(doc.filename)}</div>`
+        : `<img class="preview" src="${API}/documents/${doc.document_id}/image?variant=annotated&t=${Date.now()}" alt="ภาพพร้อมกรอบไฮไลท์">`}
       ${expiryBanner(doc.expiry)}
       ${reasons ? `<div class="notice"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
       ${warns ? `<div class="notice bad"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
@@ -485,7 +652,8 @@ async function rejectDoc(doc, el) {
   if (!reason) return;
   const r = await fetch(`${API}/review/${doc.document_id}/reject`, { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ reviewer, reason }) });
-  if (r.ok) { renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+  if (r.ok) { saveReviewer(reviewer); renderResult(await r.json(), el); refreshCount(); toast("ปฏิเสธแล้ว"); }
+  else toast("ปฏิเสธไม่สำเร็จ");
 }
 
 // ---------- สถานะวันหมดอายุ
@@ -503,9 +671,9 @@ function expiryBanner(e) {
 }
 function docRow(a, right = "") {
   const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
-  return `<div class="list-item" data-id="${a.document_id}"><img loading="lazy" src="${API}/documents/${a.document_id}/image?variant=original" alt="">
+  return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id, a.engine === "manual")}
     <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
-    <div class="muted">Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
+    <div class="muted">${a.engine === "manual" ? esc(a.filename) + " · " : ""}Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
     <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
 }
 
@@ -587,11 +755,31 @@ async function pollAlerts() {
     seenAlerts = ids;
   } catch {}
 }
-$("#notifBtn").onclick = async () => {
-  if (!("Notification" in window)) return toast("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
-  const p = await Notification.requestPermission();
-  toast(p === "granted" ? "เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)" : "ไม่ได้รับอนุญาตให้แจ้งเตือน");
+// เบราว์เซอร์ให้ขอสิทธิ์แจ้งเตือนได้เฉพาะ HTTPS หรือ localhost และถ้าเคยกด "บล็อก" ไว้ ต้องปลดบล็อกเองที่แถบที่อยู่
+const NOTIF_HELP = {
+  insecure: "<b>เปิดการแจ้งเตือนผ่านลิงก์ http://ไอพี ไม่ได้</b>เบราว์เซอร์อนุญาตเฉพาะ HTTPS หรือ localhost — บนคอมให้เปิดผ่าน http://localhost:8000 ส่วนมือถือต้องใช้ลิงก์ HTTPS (เช่นเวอร์ชันที่ deploy ขึ้นเว็บ)",
+  denied: "<b>เบราว์เซอร์บล็อกการแจ้งเตือนของเว็บนี้ไว้</b>วิธีปลดบล็อก: กดไอคอน ⓘ หรือ 🔒 หน้าช่องที่อยู่เว็บ → การแจ้งเตือน (Notifications) → เลือก \"อนุญาต\" แล้วรีเฟรชหน้านี้ (มือถือ: ⋮ → การตั้งค่า → การตั้งค่าเว็บไซต์ → การแจ้งเตือน)",
+  unsupported: "<b>เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน</b>ลองใช้ Chrome หรือ Edge (iPhone ต้อง \"เพิ่มไปยังหน้าจอโฮม\" ก่อน)",
 };
+function notifState() {
+  if (!window.isSecureContext) return "insecure";
+  if (!("Notification" in window)) return "unsupported";
+  return Notification.permission;   // default | granted | denied
+}
+function renderNotif() {
+  const s = notifState(), b = $("#notifBtn"), help = $("#notifHelp");
+  b.innerHTML = s === "granted" ? "✅ เปิดการแจ้งเตือนบนเครื่องนี้แล้ว" : `<svg class="i"><use href="#i-bell"/></svg>เปิดการแจ้งเตือนบนเครื่องนี้`;
+  b.disabled = s === "granted";
+  help.innerHTML = NOTIF_HELP[s] || ""; help.classList.toggle("hidden", !NOTIF_HELP[s]);
+}
+$("#notifBtn").onclick = async () => {
+  if (notifState() === "default") {
+    const p = await Notification.requestPermission();
+    if (p === "granted") { toast("เปิดการแจ้งเตือนแล้ว (ต้องเปิดหน้านี้ค้างไว้)"); new Notification("✅ เปิดการแจ้งเตือนแล้ว", { body: "จะแจ้งเมื่อมีสินค้าใกล้หมดอายุ" }); }
+  }
+  renderNotif();
+};
+renderNotif();
 setInterval(pollAlerts, 60000);
 
 // ---------- queue / history
@@ -599,13 +787,16 @@ function itemHtml(d) {
   const [st, cls] = STATUS_TH[d.status] || [d.status, ""]; const exp = d.fields.exp_date;
   const v = exp ? (exp.value ?? exp.predicted_value) : null;
   return `<div class="list-item" data-id="${d.document_id}">
-    <img loading="lazy" src="${API}/documents/${d.document_id}/image?variant=original" alt="">
+    ${thumb(d.document_id, d.engine === "manual")}
     <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
-    <div class="muted">#${d.document_id} · มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%</div></div>
+    <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div>
+    ${d.status === "PENDING_REVIEW" && reasonShort(d.route_reasons) ? `<div class="why">⚠️ ${esc(reasonShort(d.route_reasons))}</div>` : ""}</div>
     <span class="badge ${cls}">${st}</span></div>`;
 }
 async function openDoc(id) {
-  const d = await (await fetch(`${API}/documents/${id}`)).json(); showTab("scan"); renderResult(d, $("#result"));
+  const r = await fetch(`${API}/documents/${id}`).catch(() => null);
+  if (!r?.ok) return toast("เปิดรายการนี้ไม่ได้");
+  const d = await r.json(); showTab("scan"); renderResult(d, $("#result"));
   $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function bindItems(container) { container.querySelectorAll(".list-item").forEach((x) => x.onclick = () => openDoc(x.dataset.id)); }
@@ -631,8 +822,8 @@ async function refreshCount() {
   } catch {}
   pollAlerts();
 }
-fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `● ${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
-  .catch(() => { $("#health").textContent = "ออฟไลน์"; });
+fetch("/health").then((r) => r.json()).then((h) => { THRESHOLD = h.threshold; $("#health").textContent = `${h.engine} · ≥${Math.round(h.threshold * 100)}%`; $("#adays").textContent = h.alert_days_before; })
+  .catch(() => { $("#health").textContent = "ออฟไลน์";  });
 refreshCount();
 </script>
 </body>

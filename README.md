@@ -35,7 +35,7 @@ flowchart LR
     end
     L2 --> L3
     subgraph L3[3. Confidence & Business Rules]
-      F[Field confidence] --> R[Rules R01-R09] --> RT{conf ≥ 90%<br/>และผ่านทุกกฎ?}
+      F[Field confidence] --> R[Rules R01-R11] --> RT{conf ≥ 90%<br/>และผ่านทุกกฎ?}
     end
     RT -->|ใช่| AA[AUTO_APPROVED]
     RT -->|ไม่| Q
@@ -79,7 +79,7 @@ expiry-ocr/
 ├── ui/review_app.py            # Streamlit HITL Review UI
 ├── evaluation/                 # metrics.py, evaluate.py
 ├── scripts/                    # generate_synthetic.py, finetune_trocr.py
-├── tests/                      # pytest 40 ข้อ
+├── tests/                      # pytest 108 ข้อ
 ├── models/calibration.json     # ตาราง calibration ความมั่นใจของ RapidOCR
 ├── reports/                    # รายงานผลการประเมิน
 ├── run.bat / run.sh / run.py   # เปิดระบบคลิกเดียว
@@ -179,7 +179,7 @@ confidence = min(ความมั่นใจรายตัวอักษร
 | รหัส | กฎ | ระดับ |
 |---|---|---|
 | R01 | ต้องพบวันหมดอายุ | error |
-| R02 | รูปแบบวันที่อยู่ในรายการมาตรฐาน (YYYY-MM-DD, DD/MM/YYYY, DD/MM/YY, DD MON YYYY, MON YYYY, MM/YYYY, DDMMYY) | error |
+| R02 | รูปแบบวันที่อยู่ในรายการมาตรฐาน (YYYY-MM-DD, DD/MM/YYYY, DD/MM/YY, YY/MM/DD, DD MON YYYY, MON DD YYYY, MON YYYY, MM/YYYY, DDMMYY) | error |
 | R03 | เดือน 01-12, วัน 01-31, ปีอยู่ในช่วงที่เป็นไปได้ | error |
 | R04 | เป็นวันที่ที่มีจริงในปฏิทิน (เช่น 30/02 ไม่ผ่าน) | error |
 | R05 | วันหมดอายุต้องอยู่หลังวันผลิต | error |
@@ -188,10 +188,13 @@ confidence = min(ความมั่นใจรายตัวอักษร
 | R08 | Lot เป็นตัวอักษร/ตัวเลข 3-20 ตัว | error |
 | R09 | สินค้าหมดอายุแล้ว | warning (แจ้งเตือน) |
 | R10 | พบวันที่อื่นในภาพที่ไม่ได้ถูกจัดเป็น EXP/MFG (อาจหา label ไม่เจอ) | error |
+| R11 | วันที่ตีความได้ 2 แบบ เช่น `21.06.25` = 2021-06-25 (ปี.เดือน.วัน แบบเกาหลี/ญี่ปุ่น) หรือ 2025-06-21 — ให้คนยืนยัน | error |
 
-รองรับปี พ.ศ. (2568 / 68), ชื่อเดือนไทย (ม.ค. – ธ.ค.) และอังกฤษ, label ภาษาไทย (หมดอายุ, ควรบริโภคก่อน, ผลิต, ล็อต)
+รองรับปี พ.ศ. (2568 / 68), ชื่อเดือนไทย (ม.ค. – ธ.ค.) และอังกฤษ, วันที่แบบอเมริกัน (`APR 14 2022`, `FEB/26/21`), ตัวเลขติดกัน (`20211130`),
+label ภาษาไทย (หมดอายุ, ควรบริโภคก่อน, ผลิต, ล็อต), อังกฤษ (EXP, BEST BEFORE, USE BY, SELL BY ...) และ เกาหลี/ญี่ปุ่น/จีน (유통기한, 賞味期限, 生产日期 ...)
 
-**Routing** (`app/rules/router.py`): ทุกฟิลด์ความมั่นใจ ≥ `CONFIDENCE_THRESHOLD` (0.90) **และ** ผ่านกฎ error ทุกข้อ **และ** ensemble เห็นตรงกันทุกรอบ → `AUTO_APPROVED`; ไม่เช่นนั้น → `PENDING_REVIEW` พร้อมเหตุผล
+**Routing** (`app/rules/router.py`): ทุกฟิลด์ความมั่นใจ ≥ `CONFIDENCE_THRESHOLD` (0.90) **และ** ผ่านกฎ error ทุกข้อ **และ** ensemble เห็นตรงกันทุกรอบ
+**และ** วันหมดอายุมี label กำกับ (วันที่ลอย ๆ อาจเป็นวันผลิต → `NO_LABEL`) → `AUTO_APPROVED`; ไม่เช่นนั้น → `PENDING_REVIEW` พร้อมเหตุผล
 
 ## 6. เรื่องความแม่นยำ 99–100%
 
@@ -255,6 +258,25 @@ v2 = แก้ KIE (ป้าย BB/PROD/L:, ตัวคั่นวันท�
 > แล้ว fit calibration และวัดผลซ้ำด้วยคำสั่งเดียวกัน
 >
 > ผลของ mock engine (สำหรับทดสอบกลไก routing) อยู่ที่ `reports/mock_synthetic/report.md`
+
+### ผลบนฉลากจริง 36 ภาพ (`datasets/real_expdate`, ภาพถ่ายสินค้าจริงจากชุด ExpDate)
+
+วัดด้วยคำสั่ง `python -m evaluation.evaluate --data datasets/real_expdate --out reports/real_expdate_v2 --engine rapidocr --today 2021-01-01`
+(`--today` = ช่วงเวลาที่ถ่ายภาพ เพราะวันที่บนฉลากเป็นปี 2020–2022) — รายงานเต็ม `reports/real_expdate_v2/report.md`
+
+| ตัวชี้วัด | ก่อน | หลังปรับ KIE (v3) |
+|---|---|---|
+| Field-Level Accuracy (EXP) | 52.8% | **86.1%** |
+| CER (EXP) | 35.6% | 15.1% |
+| Document Accuracy (OCR ล้วน) | 41.7% | **83.3%** |
+| First-Pass Yield | 16.7% | 25.0% |
+| **Auto-Approved Precision** | 50% (3/6, ผิด 3 ภาพ) | **100% (9/9, False Accept = 0)** |
+| Final Accuracy (with HITL) | 91.7% | 100% |
+
+สิ่งที่แก้: อ่านวันที่แบบอเมริกัน (`APR 14 2022`, `DEC-28-2021`, `FEB/26/21`), ตัวเลขติดกันแบบปีขึ้นก่อน (`20211130`),
+ปี.เดือน.วัน แบบเกาหลี (`22.01.12` + กฎ R11), ไม่เดาวันผลิตจากรหัสสินค้า, label ที่ OCR สะกดเพี้ยน และไม่อนุมัติเอง
+เมื่อวันหมดอายุไม่มี label กำกับ ส่วนชุดสังเคราะห์ (250 ภาพ, seed 11) ไม่แย่ลง: FPY 86.0% → 86.8%,
+False Accept 1 → 0 (`reports/rapidocr_test_v3/report.md`)
 
 ## 7.1 แจ้งเตือนวันหมดอายุ
 
@@ -345,21 +367,26 @@ v2 = แก้ KIE (ป้าย BB/PROD/L:, ตัวคั่นวันท�
 
 ## 12. เผยแพร่ให้คนอื่นเปิดหน้าเว็บได้ (ฟรี)
 
-GitHub Pages เปิดได้เฉพาะหน้าเว็บนิ่ง แต่ระบบนี้ต้องมีเซิร์ฟเวอร์ Python สำหรับ AI OCR จึงใช้ **Hugging Face Spaces** (ฟรี, CPU 16GB)
+GitHub Pages เปิดได้เฉพาะหน้าเว็บนิ่ง แต่ระบบนี้ต้องมีเซิร์ฟเวอร์ Python สำหรับ AI OCR จึงใช้ **Hugging Face Spaces** (ฟรี, CPU 2 vCPU / RAM 16GB, ได้ลิงก์ HTTPS)
 
-**ครั้งแรก (ประมาณ 5 นาที)**
-1. สมัคร/ล็อกอิน https://huggingface.co → **New Space** → ตั้งชื่อ (เช่น `expiry-ocr`) → SDK เลือก **Docker** (Blank) → Public → Create
-2. สร้าง token ที่ https://huggingface.co/settings/tokens (สิทธิ์ **Write**)
+**ครั้งแรก (ประมาณ 5 นาที ทำครั้งเดียว)**
+1. สมัคร/ล็อกอิน https://huggingface.co
+2. สร้าง token ที่ https://huggingface.co/settings/tokens → **Create new token** → ชนิด **Write** → คัดลอกไว้
 3. ใน GitHub repo: **Settings → Secrets and variables → Actions**
-   - แท็บ Secrets: เพิ่ม `HF_TOKEN` = token จากข้อ 2
-   - แท็บ Variables: เพิ่ม `HF_SPACE` = `<ชื่อผู้ใช้ HF>/<ชื่อ Space>` เช่น `jirayu/expiry-ocr`
-4. ไปที่แท็บ **Actions → Deploy to Hugging Face Spaces → Run workflow**
-5. รอ Space build เสร็จ (~5 นาที) จะได้ลิงก์ `https://<ชื่อผู้ใช้>-expiry-ocr.hf.space` ส่งให้ใครก็เปิดได้
-   และเป็น HTTPS จึงใช้ปุ่ม "เปิดกล้อง" บนมือถือได้
+   - แท็บ **Secrets** → New repository secret: `HF_TOKEN` = token จากข้อ 2
+   - แท็บ **Variables** → New repository variable: `HF_SPACE` = `<ชื่อผู้ใช้ HF>/expiry-ocr`
+4. แท็บ **Actions → Deploy to Hugging Face Spaces → Run workflow**
+   (workflow จะสร้าง Space แบบ Docker ให้เองถ้ายังไม่มี ไม่ต้องกด New Space)
+5. เปิด `https://huggingface.co/spaces/<ชื่อผู้ใช้ HF>/expiry-ocr` รอ build เสร็จ (~5–8 นาที ครั้งแรก)
+   จะได้ลิงก์ตรง `https://<ชื่อผู้ใช้>-expiry-ocr.hf.space` ส่งให้ใครก็เปิดได้ และใช้ปุ่ม "เปิดกล้อง" บนมือถือได้
 
-หลังจากนั้นทุกครั้งที่ push เข้า `main` ระบบจะ deploy ใหม่ให้อัตโนมัติ
+หลังจากนั้นทุกครั้งที่ push/merge เข้า `main` ระบบจะ deploy ใหม่ให้อัตโนมัติ
+
+workflow อัปโหลดด้วย `huggingface_hub` (HF ไม่รับไฟล์ภาพผ่าน `git push` ธรรมดา) และตัดไฟล์ที่ไม่ต้องใช้ตอนรัน
+เช่น ภาพประกอบ README ชุดทดสอบ และรายงาน ออก เพื่อให้ build เร็ว
 
 ทางเลือกอื่น: `Dockerfile` ใช้กับ Render / Railway / Google Cloud Run ได้เช่นกัน (ตั้ง port ผ่าน env `PORT`)
 
-> หมายเหตุ: บน Spaces ฟรี ฐานข้อมูลและภาพที่อัปโหลดจะหายเมื่อ Space รีสตาร์ท (เหมาะกับการสาธิต)
-> และทุกคนที่มีลิงก์สามารถตรวจ/แก้ในคิวได้ ถ้าใช้งานจริงควรเพิ่มระบบล็อกอิน
+> หมายเหตุ: บน Spaces ฟรี ฐานข้อมูลและภาพที่อัปโหลดจะหายเมื่อ Space รีสตาร์ท/หลับ (Space ที่ไม่มีคนใช้ 48 ชม. จะหลับ
+> และตื่นเองเมื่อมีคนเปิด ใช้เวลาราว 1 นาที) หน้าเว็บแสดงคำเตือนว่าเป็นเว็บสาธิตและทุกคนที่มีลิงก์เห็นภาพในคิว
+> ถ้าใช้งานจริงควรเพิ่มระบบล็อกอินและฐานข้อมูลถาวร (เช่น PostgreSQL ผ่าน `DATABASE_URL`)

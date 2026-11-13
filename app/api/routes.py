@@ -4,12 +4,14 @@ from __future__ import annotations
 import io
 import json
 import tempfile
+import threading
 import zipfile
 from datetime import date
 from pathlib import Path
 
 import cv2
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -23,11 +25,14 @@ from app.models import DocumentStatus
 from app.pipeline import ExpiryOCRPipeline
 from app.review import service
 from app.review.service import FieldCorrection
-from app.schemas import AckIn, RejectIn, ReviewIn
+from app.schemas import AckIn, ManualEntryIn, RejectIn, ReviewIn
 
 router = APIRouter(prefix="/api/v1")
 MAX_UPLOAD = 15 * 1024 * 1024
+THUMB_SIZE = 240
 _pipeline: ExpiryOCRPipeline | None = None
+# OCR ใช้ CPU หนัก: อ่านทีละภาพ (กันหน่วยความจำ/CPU ล้นเมื่อหลายคนส่งพร้อมกันบนเครื่องเล็ก เช่น HF Spaces)
+_ocr_lock = threading.Lock()
 
 
 def get_pipeline() -> ExpiryOCRPipeline:
@@ -46,10 +51,22 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         raise HTTPException(400, "ไฟล์ว่าง")
     if len(raw) > MAX_UPLOAD:
         raise HTTPException(413, "ไฟล์ใหญ่เกิน 15MB")
+    def _ingest():
+        with _ocr_lock:
+            return service.ingest(db, raw, file.filename or "upload.jpg", pipeline)
+
     try:
-        doc, _ = service.ingest(db, raw, file.filename or "upload.jpg", pipeline)
+        # รัน OCR นอก event loop — ระหว่างอ่านภาพ (2-5 วินาที) หน้าเว็บของคนอื่นยังโหลดได้ตามปกติ
+        doc, _ = await run_in_threadpool(_ingest)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    return document_json(doc)
+
+
+@router.post("/documents/manual", summary="กรอกวันหมดอายุเอง (ไม่ต้องมีภาพ) -> อนุมัติทันที")
+def create_manual_document(body: ManualEntryIn, db: Session = Depends(get_session)):
+    values = {"exp_date": body.exp_date, "mfg_date": body.mfg_date, "lot_number": body.lot_number}
+    doc = service.create_manual(db, body.user, values, body.product_name, body.force)
     return document_json(doc)
 
 
@@ -64,15 +81,25 @@ def get_document(doc_id: int, db: Session = Depends(get_session)):
     return document_json(service.get_document(db, doc_id))
 
 
-@router.get("/documents/{doc_id}/image", summary="ภาพ original | processed | annotated (มีกรอบไฮไลท์)")
-def get_image(doc_id: int, variant: str = Query("annotated", pattern="^(original|processed|annotated)$"),
+@router.get("/documents/{doc_id}/image", summary="ภาพ original | processed | annotated (มีกรอบไฮไลท์) | thumb (ย่อสำหรับรายการ)")
+def get_image(doc_id: int, variant: str = Query("annotated", pattern="^(original|processed|annotated|thumb)$"),
               db: Session = Depends(get_session)):
     doc = service.get_document(db, doc_id)
+    if not doc.original_path:   # รายการที่กรอกเอง ไม่มีภาพ
+        raise HTTPException(404, "รายการนี้กรอกเอง ไม่มีภาพ")
     if variant == "processed" and doc.processed_path:
         return Response(Path(doc.processed_path).read_bytes(), media_type="image/png")
     img = cv2.imread(doc.original_path)
     if img is None:
         raise HTTPException(404, "ไม่พบไฟล์ภาพ")
+    if variant == "thumb":
+        # ภาพย่อ JPEG สำหรับรายการคิว/ประวัติ: เล็กกว่า PNG เต็มขนาดหลายร้อยเท่า และให้เบราว์เซอร์แคชได้
+        h, w = img.shape[:2]
+        s = THUMB_SIZE / max(h, w)
+        if s < 1:
+            img = cv2.resize(img, (max(1, round(w * s)), max(1, round(h * s))), interpolation=cv2.INTER_AREA)
+        ok, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        return Response(buf.tobytes(), media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
     if variant == "annotated":
         fields = [{"name": f.name, "value": f.final_value or f.predicted_value, "confidence": f.confidence,
                    "polygon": f.bbox} for f in doc.fields]
