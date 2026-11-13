@@ -35,7 +35,7 @@ flowchart LR
     end
     L2 --> L3
     subgraph L3[3. Confidence & Business Rules]
-      F[Field confidence] --> R[Rules R01-R09] --> RT{conf ≥ 90%<br/>และผ่านทุกกฎ?}
+      F[Field confidence] --> R[Rules R01-R11] --> RT{conf ≥ 90%<br/>และผ่านทุกกฎ?}
     end
     RT -->|ใช่| AA[AUTO_APPROVED]
     RT -->|ไม่| Q
@@ -79,7 +79,7 @@ expiry-ocr/
 ├── ui/review_app.py            # Streamlit HITL Review UI
 ├── evaluation/                 # metrics.py, evaluate.py
 ├── scripts/                    # generate_synthetic.py, finetune_trocr.py
-├── tests/                      # pytest 40 ข้อ
+├── tests/                      # pytest 108 ข้อ
 ├── models/calibration.json     # ตาราง calibration ความมั่นใจของ RapidOCR
 ├── reports/                    # รายงานผลการประเมิน
 ├── run.bat / run.sh / run.py   # เปิดระบบคลิกเดียว
@@ -179,7 +179,7 @@ confidence = min(ความมั่นใจรายตัวอักษร
 | รหัส | กฎ | ระดับ |
 |---|---|---|
 | R01 | ต้องพบวันหมดอายุ | error |
-| R02 | รูปแบบวันที่อยู่ในรายการมาตรฐาน (YYYY-MM-DD, DD/MM/YYYY, DD/MM/YY, DD MON YYYY, MON YYYY, MM/YYYY, DDMMYY) | error |
+| R02 | รูปแบบวันที่อยู่ในรายการมาตรฐาน (YYYY-MM-DD, DD/MM/YYYY, DD/MM/YY, YY/MM/DD, DD MON YYYY, MON DD YYYY, MON YYYY, MM/YYYY, DDMMYY) | error |
 | R03 | เดือน 01-12, วัน 01-31, ปีอยู่ในช่วงที่เป็นไปได้ | error |
 | R04 | เป็นวันที่ที่มีจริงในปฏิทิน (เช่น 30/02 ไม่ผ่าน) | error |
 | R05 | วันหมดอายุต้องอยู่หลังวันผลิต | error |
@@ -188,10 +188,13 @@ confidence = min(ความมั่นใจรายตัวอักษร
 | R08 | Lot เป็นตัวอักษร/ตัวเลข 3-20 ตัว | error |
 | R09 | สินค้าหมดอายุแล้ว | warning (แจ้งเตือน) |
 | R10 | พบวันที่อื่นในภาพที่ไม่ได้ถูกจัดเป็น EXP/MFG (อาจหา label ไม่เจอ) | error |
+| R11 | วันที่ตีความได้ 2 แบบ เช่น `21.06.25` = 2021-06-25 (ปี.เดือน.วัน แบบเกาหลี/ญี่ปุ่น) หรือ 2025-06-21 — ให้คนยืนยัน | error |
 
-รองรับปี พ.ศ. (2568 / 68), ชื่อเดือนไทย (ม.ค. – ธ.ค.) และอังกฤษ, label ภาษาไทย (หมดอายุ, ควรบริโภคก่อน, ผลิต, ล็อต)
+รองรับปี พ.ศ. (2568 / 68), ชื่อเดือนไทย (ม.ค. – ธ.ค.) และอังกฤษ, วันที่แบบอเมริกัน (`APR 14 2022`, `FEB/26/21`), ตัวเลขติดกัน (`20211130`),
+label ภาษาไทย (หมดอายุ, ควรบริโภคก่อน, ผลิต, ล็อต), อังกฤษ (EXP, BEST BEFORE, USE BY, SELL BY ...) และ เกาหลี/ญี่ปุ่น/จีน (유통기한, 賞味期限, 生产日期 ...)
 
-**Routing** (`app/rules/router.py`): ทุกฟิลด์ความมั่นใจ ≥ `CONFIDENCE_THRESHOLD` (0.90) **และ** ผ่านกฎ error ทุกข้อ **และ** ensemble เห็นตรงกันทุกรอบ → `AUTO_APPROVED`; ไม่เช่นนั้น → `PENDING_REVIEW` พร้อมเหตุผล
+**Routing** (`app/rules/router.py`): ทุกฟิลด์ความมั่นใจ ≥ `CONFIDENCE_THRESHOLD` (0.90) **และ** ผ่านกฎ error ทุกข้อ **และ** ensemble เห็นตรงกันทุกรอบ
+**และ** วันหมดอายุมี label กำกับ (วันที่ลอย ๆ อาจเป็นวันผลิต → `NO_LABEL`) → `AUTO_APPROVED`; ไม่เช่นนั้น → `PENDING_REVIEW` พร้อมเหตุผล
 
 ## 6. เรื่องความแม่นยำ 99–100%
 
@@ -255,6 +258,25 @@ v2 = แก้ KIE (ป้าย BB/PROD/L:, ตัวคั่นวันท�
 > แล้ว fit calibration และวัดผลซ้ำด้วยคำสั่งเดียวกัน
 >
 > ผลของ mock engine (สำหรับทดสอบกลไก routing) อยู่ที่ `reports/mock_synthetic/report.md`
+
+### ผลบนฉลากจริง 36 ภาพ (`datasets/real_expdate`, ภาพถ่ายสินค้าจริงจากชุด ExpDate)
+
+วัดด้วยคำสั่ง `python -m evaluation.evaluate --data datasets/real_expdate --out reports/real_expdate_v2 --engine rapidocr --today 2021-01-01`
+(`--today` = ช่วงเวลาที่ถ่ายภาพ เพราะวันที่บนฉลากเป็นปี 2020–2022) — รายงานเต็ม `reports/real_expdate_v2/report.md`
+
+| ตัวชี้วัด | ก่อน | หลังปรับ KIE (v3) |
+|---|---|---|
+| Field-Level Accuracy (EXP) | 52.8% | **86.1%** |
+| CER (EXP) | 35.6% | 15.1% |
+| Document Accuracy (OCR ล้วน) | 41.7% | **83.3%** |
+| First-Pass Yield | 16.7% | 25.0% |
+| **Auto-Approved Precision** | 50% (3/6, ผิด 3 ภาพ) | **100% (9/9, False Accept = 0)** |
+| Final Accuracy (with HITL) | 91.7% | 100% |
+
+สิ่งที่แก้: อ่านวันที่แบบอเมริกัน (`APR 14 2022`, `DEC-28-2021`, `FEB/26/21`), ตัวเลขติดกันแบบปีขึ้นก่อน (`20211130`),
+ปี.เดือน.วัน แบบเกาหลี (`22.01.12` + กฎ R11), ไม่เดาวันผลิตจากรหัสสินค้า, label ที่ OCR สะกดเพี้ยน และไม่อนุมัติเอง
+เมื่อวันหมดอายุไม่มี label กำกับ ส่วนชุดสังเคราะห์ (250 ภาพ, seed 11) ไม่แย่ลง: FPY 86.0% → 86.8%,
+False Accept 1 → 0 (`reports/rapidocr_test_v3/report.md`)
 
 ## 7.1 แจ้งเตือนวันหมดอายุ
 
