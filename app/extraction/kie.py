@@ -26,7 +26,8 @@ _LOT_END = r"(?![A-Z]+(?:[^A-Z0-9]|$))"                                       # 
 LABELS = {
     "exp_date": re.compile(
         r"(?<![A-Z])([B8][E3][S5]T\s*[B8][E3]?F[O0]?RE(\s*END)?|[B8][E3][S5]T\s*(IF\s*USED\s*)?[B8]Y|"  # รวม OCR สะกดหาย: BEST BFERE
-        r"U[S5]E\s*([B8]Y|[B8][E3]F[O0]RE)|[S5]ELL\s*[B8]Y|DI[S5]PLAY\s*UNTIL|"
+        r"U[S5]E\s*([A-Z]\s+)?([B8]Y|[B8][E3]F[O0]RE)|U[S5]E(?=\s*[:.]?\s*\d)|"   # "USE E BY", "USE 23-09-2028"
+        r"[S5]ELL\s*[B8]Y|DI[S5]PLAY\s*UNTIL|EXPIR[A-Z]{0,4}\s*DATE|"                # "EXPIRYD DATE"
         rf"EXP(IRY|IRES|IRE|IRATION|IRED)?([.\s]*DATE)?{_NOT_WORD}|EXD{_NOT_WORD}|EX(?=\s*[:.]?\s*\d)|"  # ไม่รวม EXPORT, EXPRESS
         r"(?<![A-Z0-9])(BB[ED]?(?![A-Z])|[B8]{2}E?(?![A-Z0-9]))|"
         r"วันหมดอายุ|หมดอายุ|ควรบริโภคก่อน|บริโภคก่อน|ควรบริโภคภายใน|ควรใช้ก่อน|ใช้ก่อน|"
@@ -184,10 +185,12 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
                 if m and not any(re.search(r"[/\-]", d.raw) for d in find_dates(m.group(0), today)):
                     vs, ve = e + m.start(), e + m.end()
                     confs = _span_conf(line, vs, ve)
+                    # รหัส Lot แทบไม่ใช้ตัว O ติดกับตัวเลข (สับสนกับเลข 0) -> "HO44B" คือ "H044B"
+                    value, lot_fixes = re.subn(r"O(?=\d)|(?<=\d)O", "0", m.group(0))
                     found[fname] = FieldPrediction(
-                        name=fname, raw_text=line.text[vs:ve], value=m.group(0),
+                        name=fname, raw_text=line.text[vs:ve], value=value,
                         confidence=min(confs), char_confidences=confs, polygon=line.polygon,
-                        line_index=idx, line_text=line.text, label=label)
+                        line_index=idx, line_text=line.text, label=label, ocr_fixes=lot_fixes)
                     covered_until = max(covered_until, ve)
                 else:
                     found[fname] = _unreadable(fname, line, idx, e, seg_end, label)
@@ -229,20 +232,35 @@ def extract_fields(lines: list[TextLine], today: date | None = None) -> dict[str
         return name not in found or found[name].value is None
 
     floating = [f for f in floating if _plausible(f[2], today)]
+    def labeled_above(name, item):
+        # label อยู่บรรทัดหนึ่งแต่ค่าอยู่บรรทัดถัดไป ("BBE MFD: 2025-11-01" / "2027-09-29") ถือว่ามี label กำกับ
+        # เฉพาะเมื่อบรรทัดถัดไปมีแต่วันที่ล้วน ๆ ถ้ามีข้อความอื่นปน ("BARCODE 2027-06-24") ยังถือว่าเดา
+        f = found.get(name)
+        idx, line, pd = item[0], item[1], item[2]
+        return (f is not None and f.value is None and f.line_index is not None and idx == f.line_index + 1
+                and len(line.text.strip(" .:-")) <= pd.end - pd.start + 1)
+
+    def take(name, item):
+        idx, line, pd, off, fx = item
+        lab = found[name].label if labeled_above(name, item) else None
+        found[name] = _date_prediction(name, line, idx, off, pd, fx, lab, lab is None)
+
     if floating and (missing("exp_date") or missing("mfg_date")):
         # วันที่ที่มีตัวคั่นชัดเจน (31/12/2025) น่าเชื่อกว่าตัวเลขติดกัน (311225) ที่อาจเป็นรหัสสินค้า/บาร์โค้ด
         strong = [f for f in floating if f[2].format not in COMPACT_FORMATS] or floating
         strong.sort(key=lambda item: item[2].to_date())
         if missing("exp_date"):
-            idx, line, pd, off, fx = strong.pop(-1)
-            found["exp_date"] = _date_prediction("exp_date", line, idx, off, pd, fx, None, True)
+            below = [f for f in strong if labeled_above("exp_date", f)]
+            item = below[0] if below else strong[-1]
+            strong.remove(item)
+            take("exp_date", item)
         exp_d = _value_date(found.get("exp_date"))
         if missing("mfg_date"):
             # MFG ที่เดาเองต้องอยู่ก่อน EXP (ถ้ารู้ EXP) — กันตัวเลขขยะบนฉลากถูกจับเป็นวันผลิต
             cands = [f for f in strong if exp_d is None or f[2].to_date() < exp_d]
             if cands:
-                idx, line, pd, off, fx = cands[0]
-                found["mfg_date"] = _date_prediction("mfg_date", line, idx, off, pd, fx, None, True)
+                below = [f for f in cands if labeled_above("mfg_date", f)]
+                take("mfg_date", below[0] if below else cands[0])
     return found
 
 

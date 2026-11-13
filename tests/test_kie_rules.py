@@ -336,3 +336,25 @@ def test_word_with_digits_is_not_unclaimed_date():
     # "06017Seoul" เคยถูกอ่านเป็นวันที่ 06/01/75 แล้วส่งคนตรวจด้วยกฎ R10
     _, rules, _ = run(["BEST BEFORE 28.04.2027", "Importeur:FineF&BServiceCo Ltd.06017Seoul/Korea"])
     assert not any(r.rule_id == "R10" and not r.passed for r in rules)
+
+
+@pytest.mark.parametrize("line", ["USE E BY 04/07/27", "USE 04-07-2027", "EXPIRYD DATE:04.07.2027"])
+def test_garbled_expiry_labels(line):
+    f, _, _ = run([line])
+    assert f["exp_date"].value == "2027-07-04" and not f["exp_date"].inferred
+
+
+def test_value_on_line_below_label_is_labeled():
+    f, _, d = run(["BBE", "2027-09-29"])
+    assert f["exp_date"].value == "2027-09-29" and not f["exp_date"].inferred
+
+
+def test_user_word_is_not_a_label():
+    f, _, _ = run(["USER MANUAL", "EXP 31/12/2027"])
+    assert f["exp_date"].value == "2027-12-31" and f["exp_date"].label.startswith("EXP")
+
+
+@pytest.mark.parametrize("line,lot", [("LOT NO. HO44B", "H044B"), ("LOT: A2O5B", "A205B")])
+def test_letter_o_next_to_digit_in_lot_is_zero(line, lot):
+    f, _, _ = run([line, "EXP 31/12/2027"])
+    assert f["lot_number"].value == lot
