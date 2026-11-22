@@ -225,6 +225,37 @@
   @media (min-width: 720px) { header { border-radius: 0 0 36px 36px; } }
   .brandrow h1 { white-space: nowrap; }
   @media (max-width: 420px) { .chip-h span { display: none; } .chip-h { padding: 8px; } .brandrow h1 { font-size: 17px; } }
+  /* ---------- คลังสินค้า (v4) */
+  .search { position: relative; }
+  .search svg.i { position: absolute; left: 12px; top: 13px; color: var(--muted); width: 20px; height: 20px; }
+  .search input { padding-left: 40px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 2px; scrollbar-width: none; margin: 0 -2px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button { flex: 0 0 auto; border: 1.5px solid var(--line); background: var(--card-2); border-radius: 999px; padding: 5px 12px;
+    font-size: 13.5px; font-weight: 500; display: inline-flex; gap: 6px; align-items: center; }
+  .chips button b { font-variant-numeric: tabular-nums; font-size: 12.5px; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--line); }
+  .chips button.on { border-color: var(--brand); background: var(--brand-soft); color: var(--text); font-weight: 600; }
+  .chips button.c-bad b { background: var(--bad-bg); color: var(--bad); } .chips button.c-warn b { background: var(--warn-bg); color: var(--warn); }
+  .chips button.c-ok b { background: var(--ok-bg); color: var(--ok); }
+  .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); margin: 12px 0 6px; gap: 2px; }
+  .stack i { display: block; height: 100%; min-width: 4px; }
+  .stack-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+  .stack-legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .stack-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .inv-tools { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .inv-tools .seg { margin: 0; flex: 1; grid-template-columns: 1fr 1fr; }
+  .inv-tools a.btn { text-decoration: none; }
+  .days { text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+  .days b { display: block; font-size: 20px; line-height: 1.1; } .days span { font-size: 11.5px; color: var(--muted); }
+  .days.bad b { color: var(--bad); } .days.warn b { color: var(--warn); } .days.ok b { color: var(--ok); } .days.gone b { color: var(--muted); }
+  .pname { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .namebox { display: flex; gap: 8px; } .namebox input { flex: 1; } .namebox .btn { width: auto; min-height: 48px; }
+  .batch-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+  .batch-row:first-of-type { border-top: 0; }
+  .batch-row .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .batch-row.click { cursor: pointer; }
+  .progress { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 10px 0 8px; }
+  .progress i { display: block; height: 100%; background: var(--brand); transition: width .3s; }
   section { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
@@ -244,6 +275,7 @@
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
   <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol>
 </svg>
 
@@ -286,12 +318,12 @@
           <div class="scan-ring"><svg class="i"><use href="#i-scan"/></svg></div>
           <h2>สแกนวันหมดอายุบนฉลาก</h2>
           <div class="muted">AI อ่าน EXP · MFG · LOT ให้อัตโนมัติ ถ้าไม่มั่นใจจะส่งให้คนตรวจ</div>
-          <div class="tips"><span class="tip">ตัวเลขเต็มกรอบ</span><span class="tip">ไม่สะท้อนแสง</span><span class="tip">ถือให้นิ่ง</span></div>
+          <div class="tips"><span class="tip">ตัวเลขเต็มกรอบ</span><span class="tip">ไม่สะท้อนแสง</span><span class="tip">ถือให้นิ่ง</span><span class="tip">เลือกได้หลายรูปพร้อมกัน</span></div>
         </div>
         <button class="btn" id="openCam" style="margin-top:12px"><svg class="i"><use href="#i-cam"/></svg>เปิดกล้องถ่ายวันหมดอายุ</button>
         <div class="grid2" style="margin-top:10px">
           <label class="btn secondary" style="margin:0;color:var(--text);font-size:15px"><svg class="i"><use href="#i-img"/></svg>เลือกรูป
-            <input id="fileInput" type="file" accept="image/*" class="hidden">
+            <input id="fileInput" type="file" accept="image/*" multiple class="hidden">
           </label>
           <button class="btn secondary" id="sampleBtn" style="font-size:15px"><svg class="i"><use href="#i-flask"/></svg>ภาพตัวอย่าง</button>
         </div>
@@ -307,6 +339,7 @@
       <label>ชื่อผู้บันทึก *</label><input id="m-user" placeholder="เช่น qa_somchai">
       <div class="row" style="margin-top:14px"><button class="btn secondary" id="m-cancel">ยกเลิก</button><button class="btn" id="m-save">บันทึก</button></div>
     </div>
+    <div id="batchCard" class="card hidden"></div>
     <div id="quality" class="card hidden"></div>
     <div id="result"></div>
     <div class="card" id="howto">
@@ -363,11 +396,27 @@
     <div class="card"><div id="alertList" class="muted">กำลังโหลด…</div></div>
   </section>
 
-  <!-- ====== HISTORY ====== -->
-  <section id="tab-history" class="hidden">
-    <div class="sum" id="metrics"></div>
-    <div class="section-title">ภาพล่าสุด</div>
-    <div class="card"><div id="historyList" class="muted">กำลังโหลด…</div></div>
+  <!-- ====== INVENTORY (คลังสินค้า) + HISTORY ====== -->
+  <section id="tab-stock" class="hidden">
+    <div class="card">
+      <div class="seg" id="stockSeg" style="grid-template-columns:1fr 1fr;margin-bottom:12px"><button data-view="inv" class="on">📦 คลังสินค้า</button><button data-view="hist">🕘 ประวัติสแกน</button></div>
+      <div id="invHead">
+        <div class="search"><svg class="i"><use href="#i-search"/></svg><input id="invQ" type="search" placeholder="ค้นหาชื่อสินค้า, Lot หรือ #รหัส" autocomplete="off"></div>
+        <div class="chips" id="invChips"></div>
+        <div class="stack" id="invStack"></div>
+        <div class="stack-legend" id="invLegend"></div>
+        <div class="inv-tools">
+          <div class="seg" id="invSort"><button data-sort="exp" class="on">ใกล้หมดก่อน</button><button data-sort="new">บันทึกล่าสุด</button></div>
+          <a class="btn secondary sm" id="csvBtn" href="#" download>⬇️ Excel (CSV)</a>
+        </div>
+      </div>
+    </div>
+    <div id="invView"><div class="card"><div id="invList" class="muted">กำลังโหลด…</div></div></div>
+    <div id="histView" class="hidden">
+      <div class="sum" id="metrics"></div>
+      <div class="section-title">ภาพล่าสุด</div>
+      <div class="card"><div id="historyList" class="muted">กำลังโหลด…</div></div>
+    </div>
   </section>
 </main>
 
@@ -377,7 +426,7 @@
     <button data-tab="queue"><span class="pill"><svg class="i"><use href="#i-queue"/></svg></span>คิวตรวจ<span class="count" id="qcount"></span></button>
     <button data-tab="calendar"><span class="pill"><svg class="i"><use href="#i-cal"/></svg></span>ปฏิทิน</button>
     <button data-tab="alerts"><span class="pill"><svg class="i"><use href="#i-bell"/></svg></span>แจ้งเตือน<span class="count" id="acount"></span></button>
-    <button data-tab="history"><span class="pill"><svg class="i"><use href="#i-hist"/></svg></span>ประวัติ</button>
+    <button data-tab="stock"><span class="pill"><svg class="i"><use href="#i-box"/></svg></span>คลัง</button>
   </div>
 </nav>
 <div class="toast" id="toast"></div>
@@ -386,7 +435,7 @@
 <script>
 const API = location.origin + "/api/v1";
 const $ = (s) => document.querySelector(s);
-const TABS = ["scan", "queue", "calendar", "alerts", "history"];
+const TABS = ["scan", "queue", "calendar", "alerts", "stock"];
 const FIELD_TH = { exp_date: "วันหมดอายุ (EXP)", mfg_date: "วันผลิต (MFG)", lot_number: "Lot Number" };
 const STATUS_TH = {
   AUTO_APPROVED: ["อนุมัติอัตโนมัติ", "b-ok"], PENDING_REVIEW: ["รอคนตรวจ", "b-warn"],
@@ -434,7 +483,7 @@ function showTab(name) {
   TABS.forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
   const offline = (id) => () => { $(id).innerHTML = empty("📡", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); };
   if (name === "queue") loadQueue().catch(offline("#queueList"));
-  if (name === "history") loadHistory().catch(offline("#historyList"));
+  if (name === "stock") loadStock();
   if (name === "alerts") loadAlerts().catch(offline("#alertList"));
   if (name === "calendar") loadCalendar();
   window.scrollTo({ top: 0 });
@@ -504,7 +553,49 @@ async function saveManual(force) {
 const NOIMG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect width="56" height="56" fill="#2a2f3a"/><text x="28" y="37" font-size="26" text-anchor="middle">✍️</text></svg>');
 function thumb(id, manual) { return `<img loading="lazy" src="${manual ? NOIMG : `${API}/documents/${id}/image?variant=thumb`}" onerror="this.onerror=null;this.src=NOIMG" alt="">`; }
 
-$("#fileInput").onchange =(e) => { const f = e.target.files[0]; if (f) handleImage(f, f.name); e.target.value = ""; };
+$("#fileInput").onchange = (e) => {
+  const files = [...e.target.files]; e.target.value = "";
+  if (files.length === 1) handleImage(files[0], files[0].name); else if (files.length > 1) runBatch(files);
+};
+
+// ---------- สแกนหลายรูปพร้อมกัน: ส่งทีละรูปตามลำดับ แสดงความคืบหน้า แตะแถวเพื่อดู/ตรวจ
+let batchBusy = false;
+async function runBatch(files) {
+  if (batchBusy) return toast("กำลังสแกนชุดก่อนหน้าอยู่ รอสักครู่");
+  batchBusy = true; files = files.slice(0, 20);
+  const card = $("#batchCard"); card.classList.remove("hidden"); $("#quality").classList.add("hidden"); $("#result").innerHTML = "";
+  const rows = files.map((f) => ({ name: f.name, state: "wait", doc: null }));
+  const draw = () => {
+    const done = rows.filter((r) => r.state !== "wait" && r.state !== "run").length;
+    const cnt = (f) => rows.filter((r) => r.doc && f(r.doc)).length;
+    card.innerHTML = `<h2>🗂️ สแกนหลายรูป (${done}/${rows.length})</h2>
+      <div class="progress"><i style="width:${(done / rows.length * 100).toFixed(0)}%"></i></div>
+      <div class="muted" style="margin-bottom:6px">อนุมัติอัตโนมัติ ${cnt((d) => d.status === "AUTO_APPROVED")} · รอคนตรวจ ${cnt((d) => d.status === "PENDING_REVIEW")}${rows.some((r) => r.state === "err") ? ` · ไม่สำเร็จ ${rows.filter((r) => r.state === "err").length}` : ""}</div>
+      ${rows.map((r, i) => {
+        const d = r.doc, [st, cls] = d ? (STATUS_TH[d.status] || [d.status, ""]) : [];
+        const exp = d?.fields.exp_date, v = exp ? (exp.value ?? exp.predicted_value) : null;
+        const right = r.state === "wait" ? `<span class="muted">รอคิว</span>` : r.state === "run" ? `<div class="spinner"></div>`
+          : r.state === "err" ? `<span class="badge b-bad">ไม่สำเร็จ</span>` : `<span class="badge ${cls}">${st}</span>`;
+        return `<div class="batch-row${d ? " click" : ""}" data-i="${i}">${d ? thumb(d.document_id) .replace("<img", '<img style="width:40px;height:40px;border-radius:10px;object-fit:cover"') : ""}
+          <div class="grow"><div>${esc(r.name)}</div>${d ? `<div class="muted">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>` : r.err ? `<div class="muted">${esc(r.err)}</div>` : ""}</div>${right}</div>`;
+      }).join("")}`;
+    card.querySelectorAll(".batch-row.click").forEach((x) => x.onclick = () => {
+      renderResult(rows[x.dataset.i].doc, $("#result")); $("#result").scrollIntoView({ behavior: "smooth", block: "start" }); });
+  };
+  draw(); card.scrollIntoView({ behavior: "smooth", block: "start" });
+  for (const [i, f] of files.entries()) {
+    rows[i].state = "run"; draw();
+    try {
+      const p = await prepare(f).catch(() => ({ blob: f }));
+      const fd = new FormData(); fd.append("file", p.blob, f.name);
+      const r = await fetch(API + "/documents", { method: "POST", body: fd });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+      rows[i].doc = await r.json(); rows[i].state = "ok";
+    } catch (e) { rows[i].state = "err"; rows[i].err = e.message; }
+    draw();
+  }
+  batchBusy = false; refreshCount(); toast(`สแกนครบ ${rows.length} รูปแล้ว`);
+}
 
 // ---------- ตรวจคุณภาพภาพบนมือถือก่อนส่ง (ความคมชัด) + ย่อขนาดเพื่อส่งเร็ว
 async function loadBitmap(blob) {
@@ -613,12 +704,27 @@ function renderResult(doc, el) {
       ${reasons ? `<div class="notice"><b>เหตุผลที่ส่งให้คนตรวจ</b><ul class="reasons">${reasons}</ul></div>` : ""}
       ${warns ? `<div class="notice bad"><b>⚠️ แจ้งเตือน</b><ul class="reasons">${warns}</ul></div>` : ""}
     </div>
+    ${doc.is_final ? `<div class="card">
+      <label style="margin-top:0">ชื่อสินค้า (ช่วยให้ค้นในคลังง่ายขึ้น)</label>
+      <div class="namebox"><input id="pname" value="${esc(doc.product_name || "")}" placeholder="เช่น นมกล่อง 200 มล." maxlength="200"><button class="btn secondary" id="pnameBtn">บันทึก</button></div>
+      ${doc.removed ? `<div class="notice" style="background:var(--card-2);color:var(--muted)"><b>📤 นำออกจากชั้นแล้ว</b>${esc(doc.removed.note || "")} โดย ${esc(doc.removed.by)} · ${new Date(doc.removed.at).toLocaleString("th-TH")}</div>
+        <button class="btn secondary" id="shelfBtn" style="margin-top:10px">↩️ นำกลับขึ้นชั้น</button>`
+        : `<button class="btn secondary" id="shelfBtn" style="margin-top:12px">📤 นำออกจากชั้นแล้ว (ขายหมด / ทิ้ง) — หยุดแจ้งเตือน</button>`}
+    </div>` : ""}
     <div class="card">${fieldsHtml}
       ${pending ? `<label>ชื่อผู้ตรวจ</label><input id="reviewer" value="${esc(reviewerName())}" placeholder="เช่น qa_somchai">
         <label>เหตุผล (ถ้าแก้ไข)</label><input id="reason" placeholder="เช่น OCR อ่าน 8 เป็น 3">
         <div class="row" style="margin-top:14px"><button class="btn" id="confirmBtn">✅ อนุมัติ / บันทึก</button></div>
         <div class="row" style="margin-top:8px"><button class="btn danger" id="rejectBtn">ปฏิเสธภาพนี้</button></div>` : ""}
     </div>`;
+  if (doc.is_final) {
+    el.querySelector("#pnameBtn").onclick = async () => {
+      const user = askUser(); if (!user) return;
+      const r = await postJson(`${API}/documents/${doc.document_id}/product`, { user, product_name: el.querySelector("#pname").value }, "PATCH");
+      if (r) { toast("บันทึกชื่อสินค้าแล้ว ✓"); renderResult(r, el); }
+    };
+    el.querySelector("#shelfBtn").onclick = () => shelfAction(doc, el);
+  }
   if (pending) {
     el.querySelector("#confirmBtn").onclick = () => submitReview(doc, el);
     el.querySelector("#rejectBtn").onclick = () => rejectDoc(doc, el);
@@ -645,6 +751,28 @@ async function submitReview(doc, el, force = false) {
   if (!r.ok) return toast(body.detail?.message || "บันทึกไม่สำเร็จ");
   toast(corrections.length ? "บันทึกการแก้ไขแล้ว ✓ (เก็บเป็นข้อมูลสอนโมเดล)" : "อนุมัติแล้ว ✓");
   renderResult(body, el); refreshCount();
+}
+function askUser() {
+  const user = reviewerName() || (prompt("ชื่อผู้บันทึก (เช่น store1)") || "").trim();
+  if (user) saveReviewer(user); return user;
+}
+async function postJson(url, body, method = "POST") {
+  const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+  const j = r ? await r.json().catch(() => ({})) : {};
+  if (!r?.ok) { toast(j.detail?.message || (typeof j.detail === "string" ? j.detail : "บันทึกไม่สำเร็จ")); return null; }
+  return j;
+}
+async function shelfAction(doc, el) {
+  const user = askUser(); if (!user) return;
+  let r;
+  if (doc.removed) r = await postJson(`${API}/documents/${doc.document_id}/restore`, { user });
+  else {
+    const note = prompt("หมายเหตุ (เช่น ขายหมด / ทิ้งแล้ว / คืนซัพพลายเออร์)", doc.expiry?.days_left < 0 ? "ทิ้งแล้ว" : "ขายหมด");
+    if (note === null) return;
+    r = await postJson(`${API}/documents/${doc.document_id}/remove`, { user, note });
+  }
+  if (r) { toast(r.removed ? "นำออกจากชั้นแล้ว ✓ หยุดแจ้งเตือนรายการนี้" : "นำกลับขึ้นชั้นแล้ว"); if (el) renderResult(r, el); refreshCount(); }
+  return r;
 }
 async function rejectDoc(doc, el) {
   const reviewer = el.querySelector("#reviewer").value.trim(); if (!reviewer) return toast("กรุณาใส่ชื่อผู้ตรวจ");
@@ -673,7 +801,7 @@ function docRow(a, right = "") {
   const [t, cls] = KIND[a.status || a.kind] || KIND.OK;
   return `<div class="list-item" data-id="${a.document_id}">${thumb(a.document_id, a.engine === "manual")}
     <div class="grow"><div class="t">EXP ${thaiDate(a.exp_date)}</div>
-    <div class="muted">${a.engine === "manual" ? esc(a.filename) + " · " : ""}Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
+    <div class="muted">${a.product_name ? esc(a.product_name) + " · " : ""}Lot ${esc(a.lot_number || "-")} · ${daysText(a.days_left)}</div>
     <div style="margin-top:4px"><span class="badge ${cls}">${t}</span></div></div>${right}</div>`;
 }
 
@@ -729,7 +857,7 @@ function loadCalendarList() {
 async function loadAlerts() {
   const list = await (await fetch(`${API}/alerts`)).json();
   $("#alertList").innerHTML = list.length ? list.map((a) =>
-    docRow(a, `<button class="btn secondary sm" data-ack="${a.id}">รับทราบ</button>`)).join("") : empty("👍", "ไม่มีสินค้าใกล้หมดอายุ");
+    docRow(a, `<div style="display:grid;gap:6px"><button class="btn secondary sm" data-ack="${a.id}">รับทราบ</button><button class="btn secondary sm" data-rm="${a.document_id}" title="ขายหมด/ทิ้งแล้ว">📤 ออกจากชั้น</button></div>`)).join("") : empty("👍", "ไม่มีสินค้าใกล้หมดอายุ");
   bindItems($("#alertList"));
   $("#alertList").querySelectorAll("[data-ack]").forEach((b) => b.onclick = async (ev) => {
     ev.stopPropagation();
@@ -737,6 +865,10 @@ async function loadAlerts() {
     await fetch(`${API}/alerts/${b.dataset.ack}/ack`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user }) });
     loadAlerts(); pollAlerts();
+  });
+  $("#alertList").querySelectorAll("[data-rm]").forEach((b) => b.onclick = async (ev) => {
+    ev.stopPropagation();
+    if (await shelfAction({ document_id: b.dataset.rm, removed: null, expiry: { days_left: -1 } })) { loadAlerts(); pollAlerts(); }
   });
 }
 let seenAlerts = null;
@@ -789,7 +921,7 @@ function itemHtml(d) {
   return `<div class="list-item" data-id="${d.document_id}">
     ${thumb(d.document_id, d.engine === "manual")}
     <div class="grow"><div class="t">EXP ${v ? thaiDate(v) : "ไม่พบ"}</div>
-    <div class="muted">#${d.document_id} · ${d.engine === "manual" ? "กรอกเอง · " + esc(d.filename) : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div>
+    <div class="muted">#${d.document_id} · ${d.product_name ? esc(d.product_name) + " · " : ""}${d.engine === "manual" ? "กรอกเอง" : `มั่นใจ ${(d.overall_confidence * 100).toFixed(0)}%`}</div>
     ${d.status === "PENDING_REVIEW" && reasonShort(d.route_reasons) ? `<div class="why">⚠️ ${esc(reasonShort(d.route_reasons))}</div>` : ""}</div>
     <span class="badge ${cls}">${st}</span></div>`;
 }
@@ -814,6 +946,51 @@ async function loadHistory() {
     <div class="card" style="margin:0"><b style="font-size:22px;color:var(--warn)">${pct(m.exception_rate)}</b><span class="muted">Exception Rate</span></div>`;
   $("#historyList").innerHTML = list.length ? list.map(itemHtml).join("") : empty("🗂️", "ยังไม่มีภาพ");
   bindItems($("#historyList"));
+}
+// ---------- คลังสินค้า
+const BUCKET = { all: ["บนชั้นทั้งหมด", ""], expired: ["หมดแล้ว", "c-bad", "var(--bad)"], today: ["หมดวันนี้", "c-bad", "color-mix(in srgb, var(--bad) 65%, var(--warn))"],
+  soon: ["ใกล้หมด", "c-warn", "var(--warn)"], month: ["≤ 30 วัน", "c-ok", "color-mix(in srgb, var(--ok) 55%, var(--line))"],
+  later: ["> 30 วัน", "c-ok", "var(--ok)"], removed: ["ออกจากชั้นแล้ว", "", "var(--muted)"] };
+let invBucket = "all", invSort = "exp", invTimer = null, stockView = "inv";
+$("#invQ").oninput = () => { clearTimeout(invTimer); invTimer = setTimeout(loadInventory, 250); };
+$("#invSort").querySelectorAll("button").forEach((b) => b.onclick = () => { invSort = b.dataset.sort;
+  $("#invSort").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); loadInventory(); });
+$("#stockSeg").querySelectorAll("button").forEach((b) => b.onclick = () => { stockView = b.dataset.view;
+  $("#stockSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); loadStock(); });
+function loadStock() {
+  const inv = stockView === "inv";
+  $("#invHead").classList.toggle("hidden", !inv); $("#invView").classList.toggle("hidden", !inv); $("#histView").classList.toggle("hidden", inv);
+  if (inv) loadInventory(); else loadHistory().catch(() => { $("#historyList").innerHTML = empty("📡", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); });
+}
+function invRow(it) {
+  const tone = it.bucket === "removed" ? "gone" : it.days_left <= 0 ? "bad" : it.bucket === "soon" ? "warn" : "ok";
+  const big = it.days_left < 0 ? -it.days_left : it.days_left;
+  const lbl = it.bucket === "removed" ? "ออกจากชั้น" : it.days_left < 0 ? "วันที่เลยมา" : it.days_left === 0 ? "หมดวันนี้" : "วันที่เหลือ";
+  return `<div class="list-item" data-id="${it.document_id}">${thumb(it.document_id, it.engine === "manual")}
+    <div class="grow"><div class="pname">${it.product_name ? esc(it.product_name) : `<span class="muted" style="font-weight:500">ยังไม่ตั้งชื่อ · #${it.document_id}</span>`}</div>
+    <div class="muted">EXP ${thaiDate(it.exp_date)} · Lot ${esc(it.lot_number || "-")}</div>
+    ${it.removed ? `<div class="muted">📤 ${esc(it.removed.note || "นำออกแล้ว")} · ${esc(it.removed.by)}</div>` : ""}</div>
+    <div class="days ${tone}"><b>${it.days_left === 0 ? "!" : big}</b><span>${lbl}</span></div></div>`;
+}
+async function loadInventory() {
+  const q = $("#invQ").value.trim(), b = invBucket === "all" ? {} : { bucket: invBucket };  // "ทั้งหมด" = ที่ยังอยู่บนชั้น
+  const params = new URLSearchParams({ q, ...b, sort: invSort });
+  $("#csvBtn").href = `${API}/export/inventory.csv?${new URLSearchParams({ q, ...b })}`;
+  let data;
+  try { data = await (await fetch(`${API}/inventory?${params}`)).json(); }
+  catch { $("#invList").innerHTML = empty("📡", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง"); return; }
+  const s = data.summary, n = { ...s, all: s.in_stock };
+  $("#invChips").innerHTML = Object.entries(BUCKET).map(([k, [t, c]]) =>
+    `<button data-b="${k}" class="${c}${k === invBucket ? " on" : ""}">${t} <b>${n[k] ?? 0}</b></button>`).join("");
+  $("#invChips").querySelectorAll("button").forEach((b) => b.onclick = () => { invBucket = b.dataset.b; loadInventory(); });
+  const parts = ["expired", "today", "soon", "month", "later"].filter((k) => s[k]);
+  $("#invStack").innerHTML = s.in_stock ? parts.map((k) => `<i style="flex:${s[k]};background:${BUCKET[k][2]}" title="${BUCKET[k][0]} ${s[k]}"></i>`).join("") : "";
+  $("#invLegend").innerHTML = s.in_stock ? `<span><b style="color:var(--text)">${s.in_stock}</b>&nbsp;รายการบนชั้น</span>` +
+    parts.map((k) => `<span><i style="background:${BUCKET[k][2]}"></i>${BUCKET[k][0]} ${s[k]}</span>`).join("") : `<span>ยังไม่มีสินค้าที่อนุมัติแล้ว</span>`;
+  const items = data.items;
+  $("#invList").innerHTML = items.length ? items.map(invRow).join("")
+    : empty(q ? "🔍" : "📦", q ? `ไม่พบ “${esc(q)}”` : invBucket === "all" ? "ยังไม่มีสินค้าในคลัง ลองสแกนหรือกรอกวันหมดอายุเอง" : "ไม่มีสินค้าในกลุ่มนี้");
+  bindItems($("#invList"));
 }
 async function refreshCount() {
   try {

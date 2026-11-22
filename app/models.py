@@ -56,6 +56,11 @@ class Document(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
     reviewed_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # คลังสินค้า (v4): ชื่อสินค้า และการนำออกจากชั้น (ขายหมด / ทิ้งแล้ว) -> ไม่แจ้งเตือนอีก
+    product_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    removed_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    removed_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     fields: Mapped[list[ExtractedField]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="ExtractedField.id"
@@ -63,6 +68,11 @@ class Document(Base):
     audit_logs: Mapped[list[AuditLog]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="AuditLog.id"
     )
+
+    @property
+    def display_name(self) -> str | None:
+        """ชื่อที่แสดง: ชื่อสินค้าที่ตั้งไว้ หรือชื่อที่กรอกเองตอนบันทึกแบบไม่มีภาพ"""
+        return self.product_name or (self.filename if self.engine == "manual" else None)
 
     def field(self, name: str) -> ExtractedField | None:
         return next((f for f in self.fields if f.name == name), None)

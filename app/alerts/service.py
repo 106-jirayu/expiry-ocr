@@ -28,7 +28,7 @@ TITLE = {
 
 
 def final_exp(doc: Document) -> date | None:
-    if doc.status not in FINAL:
+    if doc.status not in FINAL or doc.removed_at is not None:
         return None
     f = doc.field("exp_date")
     if f is None or not f.final_value:
@@ -65,7 +65,7 @@ def _message(doc: Document, kind: AlertKind, exp: date, today: date) -> str:
     when = (f"หมดอายุไปแล้ว {-days} วัน" if days < 0 else "หมดอายุวันนี้" if days == 0 else f"เหลืออีก {days} วัน")
     lines = [f"วันหมดอายุ: {exp.strftime('%d/%m/%Y')} ({when})",
              f"Lot: {lot.final_value if lot and lot.final_value else '-'}",
-             f"เอกสาร #{doc.id} · {'สินค้า' if doc.engine == 'manual' else 'ไฟล์'} {doc.filename}"]
+             f"เอกสาร #{doc.id} · " + (f"สินค้า {doc.display_name}" if doc.display_name else f"ไฟล์ {doc.filename}")]
     return "\n".join(lines)
 
 
@@ -118,7 +118,7 @@ def acknowledge(session: Session, alert_id: int, user: str) -> ExpiryAlert | Non
 
 def alert_json(a: ExpiryAlert) -> dict:
     return {"id": a.id, "document_id": a.document_id, "kind": a.kind.value, "title": TITLE[a.kind],
-            "filename": a.document.filename, "engine": a.document.engine,
+            "filename": a.document.filename, "engine": a.document.engine, "product_name": a.document.display_name,
             "exp_date": a.exp_date, "days_left": (date.fromisoformat(a.exp_date) - date.today()).days,
             "lot_number": a.lot_number, "message": a.message, "channels_sent": a.channels_sent,
             "acknowledged": a.acknowledged, "acknowledged_by": a.acknowledged_by,
@@ -130,7 +130,7 @@ def calendar(session: Session, start: date, end: date, today: date | None = None
     today = today or date.today()
     q = (select(Document, ExtractedField.final_value)
          .join(ExtractedField, ExtractedField.document_id == Document.id)
-         .where(Document.status.in_(FINAL), ExtractedField.name == "exp_date",
+         .where(Document.status.in_(FINAL), Document.removed_at.is_(None), ExtractedField.name == "exp_date",
                 ExtractedField.final_value >= start.isoformat(), ExtractedField.final_value <= end.isoformat())
          .order_by(ExtractedField.final_value, Document.id))
     out = []
@@ -144,5 +144,5 @@ def calendar(session: Session, start: date, end: date, today: date | None = None
         out.append({"document_id": doc.id, "exp_date": exp.isoformat(), "days_left": (exp - today).days,
                     "status": kind.value if kind else "OK", "doc_status": doc.status.value,
                     "lot_number": lot.final_value if lot else None, "mfg_date": mfg.final_value if mfg else None,
-                    "filename": doc.filename, "engine": doc.engine})
+                    "filename": doc.filename, "engine": doc.engine, "product_name": doc.display_name})
     return out
