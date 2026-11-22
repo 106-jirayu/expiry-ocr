@@ -111,7 +111,7 @@ def create_manual(session: Session, user: str, values: dict[str, str | None], pr
         filename=name, sha256=digest, original_path="", processed_path=None,
         status=DocumentStatus.HUMAN_APPROVED, overall_confidence=1.0, engine=MANUAL_ENGINE,
         route_reasons=[], rule_results=[r.to_dict() for r in rules], preprocessing={}, ocr_lines=[],
-        processing_ms=0.0, reviewed_by=user, reviewed_at=now,
+        processing_ms=0.0, reviewed_by=user, reviewed_at=now, product_name=(product_name or "").strip() or None,
     )
     for n in FIELDS:
         p = preds.get(n)

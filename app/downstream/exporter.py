@@ -27,6 +27,9 @@ def document_json(doc: Document, include_audit: bool = True) -> dict:
     out = {
         "document_id": doc.id,
         "filename": doc.filename,
+        "product_name": doc.display_name,
+        "removed": None if doc.removed_at is None else
+        {"at": _iso(doc.removed_at), "by": doc.removed_by, "note": doc.removed_note},
         "sha256": doc.sha256,
         "status": doc.status.value,
         "is_final": final,

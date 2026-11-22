@@ -25,7 +25,8 @@ from app.models import DocumentStatus
 from app.pipeline import ExpiryOCRPipeline
 from app.review import service
 from app.review.service import FieldCorrection
-from app.schemas import AckIn, ManualEntryIn, RejectIn, ReviewIn
+from app import inventory as inv
+from app.schemas import AckIn, ManualEntryIn, ProductNameIn, RejectIn, ReviewIn, ShelfIn
 
 router = APIRouter(prefix="/api/v1")
 MAX_UPLOAD = 15 * 1024 * 1024
@@ -174,6 +175,40 @@ def export_feedback(only_errors: bool = False, db: Session = Depends(get_session
 @router.get("/metrics", summary="ตัวชี้วัดการทำงานจริง: First-Pass Yield, Exception Rate, Correction Rate")
 def metrics(db: Session = Depends(get_session)):
     return service.operational_metrics(db)
+
+
+# ------------------------------------------------------------ คลังสินค้า
+BUCKET_PATTERN = "^(all|expired|today|soon|month|later|removed)$"
+
+
+@router.get("/inventory", summary="คลังสินค้า: ค้นหา/กรองตามกลุ่มวันหมดอายุ พร้อมสรุปจำนวนแต่ละกลุ่ม")
+def inventory(q: str = "", bucket: str | None = Query(None, pattern=BUCKET_PATTERN),
+              sort: str = Query("exp", pattern="^(exp|new)$"), db: Session = Depends(get_session)):
+    return inv.inventory(db, q, bucket, sort)
+
+
+@router.get("/export/inventory.csv", summary="ส่งออกคลังสินค้าเป็น CSV (เปิดใน Excel ได้ ภาษาไทยไม่เพี้ยน)")
+def export_inventory_csv(q: str = "", bucket: str | None = Query(None, pattern=BUCKET_PATTERN),
+                         db: Session = Depends(get_session)):
+    data = inv.to_csv(inv.inventory(db, q, bucket)["items"])
+    name = f"inventory_{date.today().isoformat()}.csv"
+    return Response(data, media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@router.patch("/documents/{doc_id}/product", summary="ตั้ง/แก้ชื่อสินค้าของรายการ")
+def set_product_name(doc_id: int, body: ProductNameIn, db: Session = Depends(get_session)):
+    return document_json(inv.rename(db, doc_id, body.user, body.product_name))
+
+
+@router.post("/documents/{doc_id}/remove", summary="นำสินค้าออกจากชั้น (ขายหมด/ทิ้งแล้ว) -> หยุดแจ้งเตือน")
+def remove_from_shelf(doc_id: int, body: ShelfIn, db: Session = Depends(get_session)):
+    return document_json(inv.remove_from_shelf(db, doc_id, body.user, body.note))
+
+
+@router.post("/documents/{doc_id}/restore", summary="นำสินค้ากลับขึ้นชั้น")
+def restore_to_shelf(doc_id: int, body: ShelfIn, db: Session = Depends(get_session)):
+    return document_json(inv.restore_to_shelf(db, doc_id, body.user))
 
 
 # ------------------------------------------------------------ แจ้งเตือนวันหมดอายุ

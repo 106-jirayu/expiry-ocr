@@ -33,3 +33,13 @@ class AckIn(BaseModel):
 class RejectIn(BaseModel):
     reviewer: str = Field(..., min_length=1)
     reason: str = Field(..., min_length=1)
+
+
+class ProductNameIn(BaseModel):
+    user: str = Field(..., min_length=1)
+    product_name: str | None = Field(None, max_length=200, description="ชื่อสินค้า (ว่าง = ลบชื่อ)")
+
+
+class ShelfIn(BaseModel):
+    user: str = Field(..., min_length=1)
+    note: str | None = Field(None, max_length=200, description="เช่น ขายหมด / ทิ้งแล้ว / คืนซัพพลายเออร์")

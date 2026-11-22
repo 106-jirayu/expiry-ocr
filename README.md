@@ -13,6 +13,8 @@
 - **หน้าเว็บมือถือ** ถ่ายรูปจากกล้อง เตือนภาพเบลอก่อนส่ง ดูผลพร้อมกรอบไฮไลท์ และตรวจแก้ได้บนมือถือ
 - **Streamlit HITL Review UI** สำหรับเจ้าหน้าที่ QA บนคอมพิวเตอร์
 - **แจ้งเตือนวันหมดอายุ** (ใกล้หมด / หมดวันนี้ / หมดแล้ว) บนหน้าเว็บ และส่งเข้า Telegram / Discord / Email / Webhook
+- **คลังสินค้า (v4)**: ค้นหาชื่อสินค้า/Lot/#รหัส, กรองตามกลุ่มวันหมดอายุ, ตั้งชื่อสินค้า, กด "นำออกจากชั้นแล้ว" (ขายหมด/ทิ้ง) เพื่อหยุดแจ้งเตือน, ส่งออก Excel (CSV ภาษาไทยไม่เพี้ยน)
+- **สแกนหลายรูปพร้อมกัน (v4)**: เลือกได้สูงสุด 20 รูป ระบบอ่านทีละรูปพร้อมแถบความคืบหน้า
 - สคริปต์ประเมินผล: **CER, Field-Level Accuracy, First-Pass Yield, Exception Rate, Auto-Approved Precision**
 
 ---
@@ -79,7 +81,7 @@ expiry-ocr/
 ├── ui/review_app.py            # Streamlit HITL Review UI
 ├── evaluation/                 # metrics.py, evaluate.py
 ├── scripts/                    # generate_synthetic.py, finetune_trocr.py
-├── tests/                      # pytest 108 ข้อ
+├── tests/                      # pytest 113 ข้อ
 ├── models/calibration.json     # ตาราง calibration ความมั่นใจของ RapidOCR
 ├── reports/                    # รายงานผลการประเมิน
 ├── run.bat / run.sh / run.py   # เปิดระบบคลิกเดียว
@@ -296,6 +298,9 @@ False Accept 1 → 0 (`reports/rapidocr_test_v3/report.md`)
 
 **ช่องทางแจ้งเตือน** (ตั้งใน `.env` เฉพาะช่องทางที่ต้องการ)
 - หน้าเว็บมือถือ แท็บ **แจ้งเตือน** + ป้ายสถานะบนผลสแกน + การแจ้งเตือนของเบราว์เซอร์ (กด "เปิดการแจ้งเตือนบนเครื่องนี้") ใช้ได้เลยไม่ต้องตั้งค่า
+- API คลังสินค้า: `GET /api/v1/inventory?q=&bucket=expired|today|soon|month|later|removed&sort=exp|new`,
+  `GET /api/v1/export/inventory.csv`, `PATCH /api/v1/documents/{id}/product`, `POST /api/v1/documents/{id}/remove` และ `/restore`
+  (ฐานข้อมูลเดิมใช้ต่อได้ ระบบเพิ่มคอลัมน์ใหม่ให้เองตอนเปิด)
 - Streamlit แท็บ **แจ้งเตือนวันหมดอายุ** (กด "รับทราบ" เมื่อจัดการสินค้าแล้ว)
 - **Telegram**: คุยกับ @BotFather → `/newbot` → ได้ `TELEGRAM_BOT_TOKEN` ทักบอทหนึ่งครั้ง แล้วเปิด
   `https://api.telegram.org/bot<TOKEN>/getUpdates` เพื่อดู `chat.id` ใส่ใน `TELEGRAM_CHAT_ID`
